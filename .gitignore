@@ -1,0 +1,14 @@
+#Cmake
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+
+#Make
+Makefile
+
+#Visual Studio
+
+#C++
+*.o
+
+
