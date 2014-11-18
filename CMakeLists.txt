@@ -1,6 +1,7 @@
-
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 2.8.10)
 project(opengl)
 
-add_subdirectory(src)
-add_subdirectory(include)
+# add_subdirectory(test)
+include_directories(include)
+
+add_executable(opengl src/main.cpp)
