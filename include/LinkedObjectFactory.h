@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <dlfcn.h>
 
+#define BUILD_FUNCTION_NAME    "build"
+
 /**
  * TODO comment
  * printf("TEST compiled at %s %s\n", __DATE__, __TIME__);
@@ -27,15 +29,15 @@ class LinkedObjectFactory
 			this->library = dlopen(source, RTLD_LAZY);
 			if( this->library == NULL )
 			{
-				printf("Failed to open lib!\n");
-				printf("Error: %s\n", dlerror());
+				fprintf(stderr, "Failed to open lib!\n");
+				fprintf(stderr, "Error: %s\n", dlerror());
 				return;
 			}
-			factory_function = dlsym(this->library, "test");
+			factory_function = dlsym(this->library, BUILD_FUNCTION_NAME);
 			if( factory_function == NULL )
 			{
-				printf("Failed to fetch 'test'\n");
-				printf("Error: %s\n", dlerror());
+				fprintf(stderr, "Failed to fetch 'test'\n");
+				fprintf(stderr, "Error: %s\n", dlerror());
 				this->free();
 				return;
 			}
@@ -65,7 +67,10 @@ class LinkedObjectFactory
 			}
 			return this->factory_function();
 		}
-
+        bool isLoaded()
+        {
+            return this->factory_function != NULL;
+        }
 	private:
 		typedef T* (*function_type)(void);
 		void* library;
