@@ -1,23 +1,29 @@
 #include <stdio.h>
 #include "test.h"
 
-class TestClass: public BaseTestClass
+class TestClass: public DynamicLoadingTestBaseClass
 {
 	public:
-		void foo()
-		{
-			printf("From dynamically linked class implementation\n");
-		};
+		void runTest();
+		void runAltTest();
 };
 
 extern "C"
 {
-	BaseTestClass* test()
+	DynamicLoadingTestBaseClass* test()
 	/* int test() */
 	{
-		BaseTestClass *test = new TestClass();
+		DynamicLoadingTestBaseClass *test = new TestClass();
 		printf("This is from dynamical library\n");
 		return test;
 	}
 }
 
+void TestClass::runTest()
+{
+	printf("From dynamically linked class implementation\n");
+}
+void TestClass::runAltTest()
+{
+	printf("Running alternative test method\n");
+}

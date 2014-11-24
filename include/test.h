@@ -1,7 +1,9 @@
 #pragma once
 
-class BaseTestClass
+class DynamicLoadingTestBaseClass
 {
 	public:
-		virtual void foo() =0;
+		virtual void runTest() =0;
+		virtual void runAltTest() =0;
 };
+
