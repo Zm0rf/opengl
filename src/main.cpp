@@ -1,6 +1,8 @@
 #include "main.h"
 
 
+#define PI 3.1415
+
 GLFWwindow* window;
 
 
@@ -20,7 +22,6 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //Set GLFW Major version to OpenGL 3.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //Set GLFW Minor version to OpenGL 3.3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 	// Open a window and create its OpenGL context
 	window = glfwCreateWindow(1024, 768, "Colored triangle", NULL, NULL);
 	if (window == NULL){
@@ -158,7 +159,9 @@ int main(void)
 	glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
 
 	glUseProgram(programID);
-	glm::vec3 position(4,3,13);
+	glm::vec3 cameraPosition(0,0,0);
+	glm::vec3 cameraRotation(0,0,0);
+	double mouseY, mouseX;
 	do{
 
 		// Clear the screen
@@ -184,24 +187,63 @@ int main(void)
 			GL_FALSE,                         // normalized?
 			0,                                // stride
 			(void*)0                          // array buffer offset
-		);
+			);
 
+		if (glfwGetKey(window, GLFW_KEY_W))
+		{
+			cameraPosition.x++;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S))
+		{
+			cameraPosition.x--;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A))
+		{
+			cameraPosition.z--;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D))
+		{
+			cameraPosition.z++;
+		}
+		if (glfwGetKey(window, GLFW_KEY_Q))
+		{
+			cameraPosition.z = 0;
+			cameraPosition.y = 0;
+			cameraPosition.x = 0;
+		}
+
+		//Get mouse position
+		glfwGetCursorPos(window, &mouseX, &mouseY);
+		cameraRotation.y += mouseX - 1024/2;
+		cameraRotation.x += mouseY - 768/2;
+
+		glfwSetCursorPos(window, 1024/2, 768/2);
+	
 		//set camera position
-		glm::mat4 View = glm::lookAt(
+		/*glm::mat4 View = glm::lookAt(
 			position,
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-			);
+			);*/
+		glm::mat4 View = glm::mat4(
+			1.0f
+		);
+
+		View = glm::rotate(View, cameraRotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+		View = glm::rotate(View, cameraRotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+		View = glm::translate(View, glm::vec3(cameraPosition));
 		//rotate camera
-		position = glm::rotateY(position, 1.0f);
+		//cameraPosition = glm::rotateY(cameraPosition, 1.0f);
 
 		glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
 		glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
 
-		renderCube(glm::vec3(1.0f, 0.0f, 1.0f));
-		renderCube(glm::vec3(1.0f, 2.0f, 1.0f));
-		renderCube(glm::vec3(1.0f, 2.0f, 3.0f));
-		renderCube(glm::vec3(3.0f, 0.0f, 1.0f));
+		renderCube(glm::vec3(3.0f, 0.0f, 0.0f));
+		renderCube(glm::vec3(-3.0f, 0.0f, 0.0f));
+		renderCube(glm::vec3(0.0f, 3.0f, 0.0f));
+		renderCube(glm::vec3(0.0f, -3.0f, 0.0f));
+		renderCube(glm::vec3(0.0f, 0.0f, 3.0f));
+		renderCube(glm::vec3(0.0f, 0.0f, -3.0f));
 
 		glDisableVertexAttribArray(0);
 
