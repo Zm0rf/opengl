@@ -162,6 +162,7 @@ int main(void)
 	glm::vec3 cameraPosition(0,0,0);
 	glm::vec3 cameraRotation(0,0,0);
 	double mouseY, mouseX;
+	int delta = 0;
 	do{
 
 		// Clear the screen
@@ -211,7 +212,7 @@ int main(void)
 			cameraPosition.y = 0;
 			cameraPosition.x = 0;
 		}
-
+		delta++;
 		//Get mouse position
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 		cameraRotation.y += mouseX - 1024/2;
@@ -237,13 +238,13 @@ int main(void)
 
 		glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
 		glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
-
-		renderCube(glm::vec3(3.0f, 0.0f, 0.0f));
-		renderCube(glm::vec3(-3.0f, 0.0f, 0.0f));
-		renderCube(glm::vec3(0.0f, 3.0f, 0.0f));
-		renderCube(glm::vec3(0.0f, -3.0f, 0.0f));
-		renderCube(glm::vec3(0.0f, 0.0f, 3.0f));
-		renderCube(glm::vec3(0.0f, 0.0f, -3.0f));
+		float pos = 3.0f + cos(delta*0.3) + cos(delta*0.1)*3 + cos(delta*0.06)*0.1;
+		renderCube(glm::vec3(pos, 0.0f, 0.0f));
+		renderCube(glm::vec3(-pos, 0.0f, 0.0f));
+		renderCube(glm::vec3(0.0f, pos, 0.0f));
+		renderCube(glm::vec3(0.0f, -pos, 0.0f));
+		renderCube(glm::vec3(0.0f, 0.0f, pos));
+		renderCube(glm::vec3(0.0f, 0.0f, -pos));
 
 		glDisableVertexAttribArray(0);
 
