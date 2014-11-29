@@ -1,16 +1,16 @@
+
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
-
-// Include GLEW
-#include <GL/glew.h>
 #include <stdio.h>
 #include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-using namespace std; // TODO remove using.
+
+// Include GLEW
+#include <GL/glew.h>
 
 // Include GLFW
 #include <GLFW/glfw3.h>
@@ -22,6 +22,7 @@ using namespace std; // TODO remove using.
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+//
 #include "cube_data.h"
 
 #define PI 3.1415

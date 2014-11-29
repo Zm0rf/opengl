@@ -71,6 +71,7 @@ int main(void)
 	glm::mat4 Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
 
 	glUseProgram(programID);
+
 	glm::vec3 cameraPosition(0,0,0);
 	glm::vec3 cameraRotation(0,0,0);
 	double mouseY, mouseX;
@@ -102,29 +103,31 @@ int main(void)
 			(void*)0                          // array buffer offset
 			);
 
-		if (glfwGetKey(window, GLFW_KEY_W))
-		{
-			cameraPosition.x += MOVE_INCREMENT;
-		}
-		if (glfwGetKey(window, GLFW_KEY_S))
-		{
-			cameraPosition.x -= MOVE_INCREMENT;
-		}
-		if (glfwGetKey(window, GLFW_KEY_A))
-		{
-			cameraPosition.z -= MOVE_INCREMENT
-		}
-		if (glfwGetKey(window, GLFW_KEY_D))
-		{
-			cameraPosition.z += MOVE_INCREMENT;
-		}
-		if (glfwGetKey(window, GLFW_KEY_Q))
-		{
-			cameraPosition.z = 0;
-			cameraPosition.y = 0;
-			cameraPosition.x = 0;
-		}
-		delta++;
+        glm::vec3 dist;
+        if (glfwGetKey(window, GLFW_KEY_W))
+        {
+            dist.z += MOVE_INCREMENT;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S))
+        {
+            dist.z -= MOVE_INCREMENT;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A))
+        {
+            dist.x += MOVE_INCREMENT
+        }
+        if (glfwGetKey(window, GLFW_KEY_D))
+        {
+            dist.x -= MOVE_INCREMENT;
+        }
+        dist = glm::rotate(dist, cameraRotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
+        cameraPosition += dist;
+        if (glfwGetKey(window, GLFW_KEY_Q))
+        {
+            cameraPosition = glm::vec3(0.0f);
+            cameraRotation = glm::vec3(0.0f);
+        }
+
 		//Get mouse position
 		glfwGetCursorPos(window, &mouseX, &mouseY);
 		cameraRotation.y += (mouseX - 1024/2)*0.01f;
@@ -147,6 +150,7 @@ int main(void)
 
 		glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
 		glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
+		delta++;
 		float pos = 3.0f + cos(delta*0.3) + cos(delta*0.1)*3 + cos(delta*0.06)*0.1;
 		renderCube(glm::vec3(pos, 0.0f, 0.0f));
 		renderCube(glm::vec3(-pos, 0.0f, 0.0f));
@@ -189,4 +193,3 @@ void renderCube(glm::vec3 position)
 	//glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }
-
