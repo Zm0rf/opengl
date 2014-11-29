@@ -47,3 +47,18 @@ class WorldChunk
         int chunk_y; // salsa
         int chunk_z;
 };
+
+class GameContext
+{
+    public:
+        GLFWwindow* window;
+        double time_delta;
+        double time_last_frame;
+        double time_now;
+        int width;
+        int height;
+};
+
+bool initContext(GameContext* context);
+
+void onWindowResize(GLFWwindow* window, int width, int height);
