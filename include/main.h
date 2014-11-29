@@ -33,3 +33,17 @@ void renderCube(glm::vec3 position);
 
 #include "Shader.h"
 
+#define CHUNK_SIZE 10
+class WorldChunk
+{
+    public:
+        WorldChunk();
+        ~WorldChunk();
+        void render();
+    private:
+        // TODO better datatype (object?)
+        bool data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+        int chunk_x;
+        int chunk_y; // salsa
+        int chunk_z;
+};

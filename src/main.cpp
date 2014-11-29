@@ -16,7 +16,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //Set GLFW Minor version to OpenGL 3.3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1024, 768, "Colored triangle", NULL, NULL);
+	window = glfwCreateWindow(1024, 768, "OPENGL TEST :D", NULL, NULL);
 	if (window == NULL){
 		fprintf(stderr, "Failed to open GLFW window.\n");
 		glfwTerminate();
@@ -72,12 +72,14 @@ int main(void)
 
 	glUseProgram(programID);
 
+    WorldChunk chunk;
+
 	glm::vec3 cameraPosition(0,0,0);
 	glm::vec3 cameraRotation(0,0,0);
+    glm::vec3 velocity(0,0,0);
 	double mouseY, mouseX;
 	int delta = 0;
 	do{
-
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -103,6 +105,29 @@ int main(void)
 			(void*)0                          // array buffer offset
 			);
 
+        // physics :D
+        velocity.y -= 0.1f;
+        if( cameraPosition.y <= 0 )
+        {
+            cameraPosition.y = 0;
+            velocity.y = 0;
+        }
+
+        // Actor rotation
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+        cameraRotation.y += (mouseX - 1024/2)*0.01f;
+        cameraRotation.x += (mouseY - 768/2)*0.01f;
+        // Clamp the rotation not to loop
+        if( cameraRotation.x < -0.5f*PI )
+        {
+            cameraRotation.x = -0.5f*PI;
+        }
+        else if( cameraRotation.x > 0.5f*PI )
+        {
+            cameraRotation.x = 0.5f*PI;
+        }
+
+        // Actor movement
         glm::vec3 dist;
         if (glfwGetKey(window, GLFW_KEY_W))
         {
@@ -120,18 +145,18 @@ int main(void)
         {
             dist.x -= MOVE_INCREMENT;
         }
+        if( glfwGetKey(window, GLFW_KEY_SPACE) )
+        {
+            velocity.y = 1.0f;
+        }
         dist = glm::rotate(dist, cameraRotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
         cameraPosition += dist;
+        cameraPosition += velocity;
         if (glfwGetKey(window, GLFW_KEY_Q))
         {
             cameraPosition = glm::vec3(0.0f);
             cameraRotation = glm::vec3(0.0f);
         }
-
-		//Get mouse position
-		glfwGetCursorPos(window, &mouseX, &mouseY);
-		cameraRotation.y += (mouseX - 1024/2)*0.01f;
-		cameraRotation.x += (mouseY - 768/2)*0.01f;
 
 		glfwSetCursorPos(window, 1024/2, 768/2);
 	
@@ -141,12 +166,10 @@ int main(void)
 			glm::vec3(0, 0, 0), // and looks at the origin
 			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
 			);*/
-		glm::mat4 View = glm::mat4(
-			1.0f
-		);
+		glm::mat4 View = glm::mat4(1.0f);
 		View = glm::rotate(View, cameraRotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
 		View = glm::rotate(View, cameraRotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-		View = glm::translate(View, glm::vec3(cameraPosition));
+		View = glm::translate(View, cameraPosition);
 
 		glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
 		glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
@@ -159,6 +182,8 @@ int main(void)
 		renderCube(glm::vec3(0.0f, 0.0f, pos));
 		renderCube(glm::vec3(0.0f, 0.0f, -pos));
 
+        chunk.render();
+
 		glDisableVertexAttribArray(0);
 
 		// Swap buffers
@@ -166,13 +191,13 @@ int main(void)
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-	glfwWindowShouldClose(window) == 0);
+	while (
+            (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) &&
+            (glfwWindowShouldClose(window) == 0) );
 
 	// Cleanup VBO
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteProgram(programID);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
@@ -192,4 +217,42 @@ void renderCube(glm::vec3 position)
 	//glm::mat4 MVP = Projection * View * Model; // Remember, matrix multiplication is the other way around
 	//glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
+}
+
+WorldChunk::WorldChunk():
+    chunk_x(0), chunk_y(0), chunk_z(0)
+{
+    for( int x=0; x<CHUNK_SIZE; x++ )
+    {
+        for( int y=0; y<CHUNK_SIZE; y++ )
+        {
+            for( int z=0; z<CHUNK_SIZE; z++ )
+            {
+                this->data[x][y][z] = false;
+                if( x == y && y == z )
+                    this->data[x][y][z] = true;
+            }
+        }
+    }
+    chunk_x += 3;
+    chunk_z += 3;
+}
+WorldChunk::~WorldChunk()
+{
+}
+void WorldChunk::render()
+{
+    for( int x=0; x<CHUNK_SIZE; x++ )
+    {
+        for( int y=0; y<CHUNK_SIZE; y++ )
+        {
+            for( int z=0; z<CHUNK_SIZE; z++ )
+            {
+                if( this->data[x][y][z] )
+                {
+                    renderCube(glm::vec3(this->chunk_x+x, this->chunk_y+y, this->chunk_z+z));
+                }
+            }
+        }
+    }
 }
