@@ -20,8 +20,16 @@ int main(void)
     // Create and compile our GLSL program from the shaders
     /* GLuint programID = LoadShaders("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader"); */
     Shader s("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader");
-    s.link();
+    if( !s.link() )
+    {
+        fprintf(stderr, "Failed to initialize main shader\n");
+        return -1;
+    }
     GLuint programID = s.getProgramId();
+
+    Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag");
+    /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
+    gui_shader.link();
 
 	//Create vertex buffer
 	GLuint vertexbuffer;
@@ -38,7 +46,6 @@ int main(void)
 	GLuint ModelID = glGetUniformLocation(programID, "M");
 	GLuint ViewID = glGetUniformLocation(programID, "V");
 	GLuint ProjectionID = glGetUniformLocation(programID, "P");
-	glUseProgram(programID);
 
     WorldChunk chunk;
 
@@ -61,7 +68,7 @@ int main(void)
                 100.0f);
 
 		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
@@ -162,14 +169,27 @@ int main(void)
             pos += cos(context.time_now*100.0f)*0.04;
         }
 
-		renderCube(glm::vec3(pos, 0.0f, 0.0f));
-		renderCube(glm::vec3(-pos, 0.0f, 0.0f));
-		renderCube(glm::vec3(0.0f, pos, 0.0f));
-		renderCube(glm::vec3(0.0f, -pos, 0.0f));
-		renderCube(glm::vec3(0.0f, 0.0f, pos));
-		renderCube(glm::vec3(0.0f, 0.0f, -pos));
+
+        // Render GUI
+        /* glEnable(GL_BLEND); */
+        /* glEnable(GL_DEPTH_TEST); */
+        /* glUseProgram(gui_shader.getProgramId()); */
+        /* /1* glUniform2f(glGetUniformLocation(gui_shader.getProgramId(), "screen_dimensions"), context.width, context.height); *1/ */
+        /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
+
+
+        // Rendering
+        glUseProgram(programID);
+        renderCube(glm::vec3(pos, 0.0f, 0.0f));
+        renderCube(glm::vec3(-pos, 0.0f, 0.0f));
+        renderCube(glm::vec3(0.0f, pos, 0.0f));
+        renderCube(glm::vec3(0.0f, -pos, 0.0f));
+        renderCube(glm::vec3(0.0f, 0.0f, pos));
+        renderCube(glm::vec3(0.0f, 0.0f, -pos));
 
         chunk.render();
+
+        // Main loop cleanup
 
 		glDisableVertexAttribArray(0);
 
@@ -234,6 +254,15 @@ bool initContext(GameContext* context)
 	glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
 	glDepthFunc(GL_LESS);
+
+    // Do not draw the faces that is pointed away from the camera
+    /* glEnable(GL_CULL_FACE); */
+    //
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    /* glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR); */
+    /* glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA); */
+
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(context->window, GLFW_STICKY_KEYS, GL_TRUE);
 
