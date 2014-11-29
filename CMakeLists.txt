@@ -14,7 +14,7 @@ include_directories(${GLEW_INCLUDE_DIRS})
 project(opengl)
 
 # Add all required sources
-add_executable(opengl src/main.cpp)
+add_executable(opengl src/main.cpp src/Shader.cpp)
 
 # Link external libraries.
 target_link_libraries(opengl ${CMAKE_DL_LIBS})
