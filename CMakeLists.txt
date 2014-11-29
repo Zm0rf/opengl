@@ -1,7 +1,23 @@
 cmake_minimum_required(VERSION 2.8.10)
+
+# Include required dependencies
+find_package(PkgConfig REQUIRED)
+pkg_search_module(GLFW REQUIRED glfw3)
+pkg_search_module(GLEW REQUIRED glew)
+
+# Add all include directories
+include_directories(include)
+include_directories(${GLFW_INCLUDE_DIRS})
+include_directories(${GLEW_INCLUDE_DIRS})
+
+# Create main project
 project(opengl)
 
-# add_subdirectory(test)
-include_directories(include)
-
+# Add all required sources
 add_executable(opengl src/main.cpp)
+
+# Link external libraries.
+target_link_libraries(opengl ${CMAKE_DL_LIBS})
+target_link_libraries(opengl ${GLEW_LIBRARIES})
+target_link_libraries(opengl ${GLFW_LIBRAIRES})
+target_link_libraries(opengl ${GLFW_STATIC_LIBRARIES})
