@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include "png.h"
 
 // Include GLEW
 #include <GL/glew.h>
@@ -62,3 +63,5 @@ class GameContext
 bool initContext(GameContext* context);
 
 void onWindowResize(GLFWwindow* window, int width, int height);
+
+GLuint png_texture_load(const char * file_name, int * width, int * height);
