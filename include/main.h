@@ -35,9 +35,19 @@
 #define degreesToRadians(deg) deg*(PI/180.0f)
 #define MOVE_INCREMENT 0.1f;
 
+// Define global shader variables (TODO MOVE)
+#define ATTRIB_VERTEX_POSITION_LOC 0
+#define ATTRIB_VERTEX_POSITION_NAME "vertexPosition"
+#define ATTRIB_VERTEX_COLOR_LOC 1
+#define ATTRIB_VERTEX_COLOR_NAME "vertexColor"
+#define UNIFORM_PROJECTION_VIEW_LOC 3
+
 void renderCube(glm::vec3 position);
 
 bool initContext(GameContext* context);
 
 void onWindowResize(GLFWwindow* window, int width, int height);
+void render(GameContext* context);
+void manageUserInput(GameContext* context);
 
+void tmpRenderMovingCubes(GameContext* context);

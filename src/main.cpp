@@ -1,7 +1,9 @@
 #include "main.h"
 
+// TODO remove global variables
 GLFWwindow* window;
 GameContext context;
+GLuint programID;
 
 int main(void)
 {
@@ -26,16 +28,16 @@ int main(void)
         fprintf(stderr, "Failed to initialize main shader\n");
         return -1;
     }
-    GLuint programID = s.getProgramId();
+    programID = s.getProgramId();
 
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag"); */
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
     /* gui_shader.link(); */
 
 	//Create vertex buffer
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
 	//Create texture coordinate buffer
@@ -50,190 +52,163 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
-	//GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-	GLuint ModelID = glGetUniformLocation(programID, "M");
-	GLuint ViewID = glGetUniformLocation(programID, "V");
-	GLuint ProjectionID = glGetUniformLocation(programID, "P");
+	/* GLuint projection_view_loc = glGetUniformLocation(programID, "projection_view"); */
 
-	glm::vec3 cameraPosition(0,0,0);
-	glm::vec3 cameraRotation(0,0,0);
     glm::vec3 velocity(0,0,0);
-	double mouseY, mouseX;
 
     int png_width, png_height;
     GLuint font_texture = png_texture_load("data/font/monospaced_bold.png", &png_width, &png_height);
+    glBindAttribLocation(programID, ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
+    glBindAttribLocation(programID, ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
 
-    do
+    // Prepare rendering
+    // 1rst attribute buffer : vertices
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+    glVertexAttribPointer(
+            ATTRIB_VERTEX_POSITION_LOC, 3,
+            GL_FLOAT, // type
+            GL_FALSE, // normalized?
+            0,        // stride
+            (void*)0  // array buffer offset
+            );
+    //
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+    glVertexAttribPointer(
+            1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+            3,                                // size
+            GL_FLOAT,                         // type
+            GL_FALSE,                         // normalized?
+            0,                                // stride
+            (void*)0                          // array buffer offset
+            );
+    //
+    glEnableVertexAttribArray(3);
+    glBindBuffer(GL_ARRAY_BUFFER, texcoordbuffer);
+    glVertexAttribPointer(
+            3,
+            2,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+            );
+
+    context.do_stop = false;
+    while( !context.do_stop )
     {
+        // Update timing related stuff
         context.time_last_frame = context.time_now;
         context.time_now = glfwGetTime();
         context.time_delta = context.time_now - context.time_last_frame;
 
-        glm::mat4 Projection = glm::perspective(
-                45.0f,
-                /* 4.0f / 3.0f, */
-                (float)context.width / (float)context.height,
-                0.1f,
-                100.0f);
-
-		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-			);
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-		glVertexAttribPointer(
-			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			3,                                // size
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
-			);
-		//
-		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, texcoordbuffer);
-		glVertexAttribPointer(
-			3,
-			2,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-			);
-
-        // physics :D (what causes the velocity to be inverted?)
-        velocity.y += 0.1f;
-        if( cameraPosition.y >= 0 )
-        {
-            cameraPosition.y = 0;
-            velocity.y = 0;
-        }
-
-        // Actor rotation
-        glfwGetCursorPos(window, &mouseX, &mouseY);
-        glfwSetCursorPos(window, context.width/2, context.height/2);
-        cameraRotation.y += (mouseX - context.width/2)*0.01f;
-        cameraRotation.x += (mouseY - context.height/2)*0.01f;
-        // Clamp the rotation not to loop
-        if( cameraRotation.x < -0.5f*PI )
-        {
-            cameraRotation.x = -0.5f*PI;
-        }
-        else if( cameraRotation.x > 0.5f*PI )
-        {
-            cameraRotation.x = 0.5f*PI;
-        }
-
-        // Actor movement
-        glm::vec3 dist;
-        if (glfwGetKey(window, GLFW_KEY_W))
-        {
-            dist.z += MOVE_INCREMENT;
-        }
-        if (glfwGetKey(window, GLFW_KEY_S))
-        {
-            dist.z -= MOVE_INCREMENT;
-        }
-        if (glfwGetKey(window, GLFW_KEY_A))
-        {
-            dist.x += MOVE_INCREMENT
-        }
-        if (glfwGetKey(window, GLFW_KEY_D))
-        {
-            dist.x -= MOVE_INCREMENT;
-        }
-        if( glfwGetKey(window, GLFW_KEY_SPACE) )
-        {
-            velocity.y = -1.0f;
-        }
-        dist = glm::rotate(dist, cameraRotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
-        cameraPosition += dist;
-        cameraPosition += velocity;
-        if (glfwGetKey(window, GLFW_KEY_Q))
-        {
-            cameraPosition = glm::vec3(0.0f);
-            cameraRotation = glm::vec3(0.0f);
-        }
-	
-		//set camera position
-		/*glm::mat4 View = glm::lookAt(
-			position,
-			glm::vec3(0, 0, 0), // and looks at the origin
-			glm::vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-			);*/
-		glm::mat4 View = glm::mat4(1.0f);
-		View = glm::rotate(View, cameraRotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-		View = glm::rotate(View, cameraRotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-		View = glm::translate(View, cameraPosition);
-
-		glUniformMatrix4fv(ViewID, 1, GL_FALSE, &View[0][0]);
-		glUniformMatrix4fv(ProjectionID, 1, GL_FALSE, &Projection[0][0]);
-
-        glBindSampler( glGetUniformLocation(programID, "test_texture"), font_texture);
-
-        // Make the cubes move :D
-        float pos = 3.0f;
-        pos += cos(context.time_now*2.0f);
-        pos += cos(context.time_now*5.0f)*0.3;
-        if( glfwGetKey(context.window, GLFW_KEY_E) == GLFW_PRESS )
-        {
-            pos += cos(context.time_now*100.0f)*0.04;
-        }
-
-
-        // Render GUI
-        /* glEnable(GL_BLEND); */
-        /* glEnable(GL_DEPTH_TEST); */
-        /* glUseProgram(gui_shader.getProgramId()); */
-        /* /1* glUniform2f(glGetUniformLocation(gui_shader.getProgramId(), "screen_dimensions"), context.width, context.height); *1/ */
-        /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
-
-
-        // Rendering
-        glUseProgram(programID);
-        renderCube(glm::vec3(pos, 0.0f, 0.0f));
-        renderCube(glm::vec3(-pos, 0.0f, 0.0f));
-        renderCube(glm::vec3(0.0f, pos, 0.0f));
-        renderCube(glm::vec3(0.0f, -pos, 0.0f));
-        renderCube(glm::vec3(0.0f, 0.0f, pos));
-        renderCube(glm::vec3(0.0f, 0.0f, -pos));
-
-        context.world.getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
+        manageUserInput(&context);
+        render(&context);
 
         // Main loop cleanup
-
-		glDisableVertexAttribArray(0);
+        // TODO is this needed?
+		/* glDisableVertexAttribArray(0); */
 
 		// Swap buffers
 		glfwSwapBuffers(context.window);
 		glfwPollEvents();
-
 	}
 
-    // Check if the ESC key was pressed or the window was closed
-	while (
-            (glfwGetKey(context.window, GLFW_KEY_ESCAPE) != GLFW_PRESS) &&
-            (glfwWindowShouldClose(context.window) == 0) );
-
 	// Cleanup VBO
-	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteBuffers(1, &vertex_buffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
 
 	return 0;
+}
+
+void manageUserInput(GameContext* context)
+{
+    // Close the application if the user wants to.
+    if( (glfwGetKey(context->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            || glfwWindowShouldClose(context->window) )
+    {
+        context->do_stop = true;
+        return;
+    }
+    if( context->camera_position.y >= 0 )
+    {
+        context->camera_position.y = 0;
+        /* velocity.y = 0; */
+    }
+
+    // Actor rotation
+    glfwGetCursorPos(window, &context->mouse_x, &context->mouse_y);
+    glfwSetCursorPos(window, context->width/2, context->height/2);
+    context->camera_rotation.y += (context->mouse_x - context->width/2)*0.01f;
+    context->camera_rotation.x += (context->mouse_y - context->height/2)*0.01f;
+
+    // Clamp the rotation not to loop
+    if( context->camera_rotation.x < -0.5f*PI )
+    {
+        context->camera_rotation.x = -0.5f*PI;
+    }
+    else if( context->camera_rotation.x > 0.5f*PI )
+    {
+        context->camera_rotation.x = 0.5f*PI;
+    }
+
+    // Actor movement
+    glm::vec3 dist;
+    if (glfwGetKey(window, GLFW_KEY_W))
+    {
+        dist.z += MOVE_INCREMENT;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S))
+    {
+        dist.z -= MOVE_INCREMENT;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A))
+    {
+        dist.x += MOVE_INCREMENT
+    }
+    if (glfwGetKey(window, GLFW_KEY_D))
+    {
+        dist.x -= MOVE_INCREMENT;
+    }
+    if( glfwGetKey(window, GLFW_KEY_SPACE) )
+    {
+        /* velocity.y = -1.0f; */
+    }
+    dist = glm::rotate(dist, context->camera_rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
+    context->camera_position += dist;
+    /* context->camera_position += velocity; */
+    if (glfwGetKey(window, GLFW_KEY_Q))
+    {
+        context->camera_position = glm::vec3(0.0f);
+        context->camera_rotation = glm::vec3(0.0f);
+    }
+}
+
+void render(GameContext* context)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+    glm::mat4 View = glm::mat4(1.0f);
+    View = glm::rotate(View, context->camera_rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    View = glm::rotate(View, context->camera_rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    View = glm::translate(View, context->camera_position);
+    glm::mat4 projection_view = context->projection_matrix * View;
+
+    glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
+
+    /* glBindSampler( glGetUniformLocation(programID, "test_texture"), font_texture); */
+
+    // Make the cubes move :D
+    tmpRenderMovingCubes(context);
+    context->world.getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
+
+}
+void prepareRender(GameContext* context)
+{
 }
 
 bool initContext(GameContext* context)
@@ -301,6 +276,12 @@ void onWindowResize(GLFWwindow* window, int width, int height)
 {
     context.width = width;
     context.height = height;
+    context.projection_matrix = glm::perspective(
+            45.0f,
+            /* 4.0f / 3.0f, */
+            (float)context.width / (float)context.height,
+            0.1f,
+            100.0f);
     glViewport(0, 0, context.width, context.height);
 }
 
@@ -318,3 +299,18 @@ void renderCube(glm::vec3 position)
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }
 
+void tmpRenderMovingCubes(GameContext* context)
+{
+    float pos = 3.0f;
+    pos += cos(context->time_now*2.0f);
+    pos += cos(context->time_now*5.0f)*0.3;
+
+    // Rendering
+    glUseProgram(programID);
+    renderCube(glm::vec3(pos, 0.0f, 0.0f));
+    renderCube(glm::vec3(-pos, 0.0f, 0.0f));
+    renderCube(glm::vec3(0.0f, pos, 0.0f));
+    renderCube(glm::vec3(0.0f, -pos, 0.0f));
+    renderCube(glm::vec3(0.0f, 0.0f, pos));
+    renderCube(glm::vec3(0.0f, 0.0f, -pos));
+}

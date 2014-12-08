@@ -15,6 +15,7 @@ class WorldChunk
         WorldChunk();
         ~WorldChunk();
         void render();
+        void checkCollisions();
 
     private:
         // TODO better datatype (object?)
