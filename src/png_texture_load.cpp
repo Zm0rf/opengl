@@ -1,5 +1,5 @@
 #include "png_texture_load.h"
-
+/*
 // TODO refactor this and move!
 GLuint png_texture_load(const char * file_name, int * width, int * height)
 {
@@ -134,4 +134,4 @@ GLuint png_texture_load(const char * file_name, int * width, int * height)
     free(row_pointers);
     fclose(fp);
     return texture;
-}
+}*/

@@ -57,7 +57,7 @@ int main(void)
     context.velocity = glm::vec3(0,0,0);
 
     int png_width, png_height;
-    GLuint font_texture = png_texture_load("data/font/monospaced_bold.png", &png_width, &png_height);
+//    GLuint font_texture = png_texture_load("data/font/monospaced_bold.png", &png_width, &png_height);
     glBindAttribLocation(programID, ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
     glBindAttribLocation(programID, ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
 
