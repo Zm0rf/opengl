@@ -33,7 +33,9 @@
 // Helper stuff
 #define PI 3.1415
 #define degreesToRadians(deg) deg*(PI/180.0f)
-#define MOVE_INCREMENT 0.03f;
+// movement increment in meters (blocks) per second
+#define MOVE_INCREMENT 12.0f
+#define VELOCITY_INCREMENT 200.0f
 
 // Define global shader variables (TODO MOVE)
 #define ATTRIB_VERTEX_POSITION_LOC 0

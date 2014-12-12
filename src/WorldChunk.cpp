@@ -41,7 +41,7 @@ void WorldChunk::checkCollides(GameContext* context)
     int x = -(int)pos.x;
     int y = -(int)pos.y-2;
     int z = -(int)pos.z;
-    printf("%d %d %d\n", x, y, z);
+    // printf("%d %d %d\n", x, y, z);
     //
     if( x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE )
         return;

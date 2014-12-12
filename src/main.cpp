@@ -95,6 +95,8 @@ int main(void)
             (void*)0            // array buffer offset
             );
 
+    onWindowResize(context.window, context.width, context.height);
+
     context.do_stop = false;
     while( !context.do_stop )
     {
@@ -161,19 +163,19 @@ void manageUserInput(GameContext* context)
     glm::vec3 dist;
     if (glfwGetKey(window, GLFW_KEY_W))
     {
-        dist.z += MOVE_INCREMENT;
+        dist.z += context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(window, GLFW_KEY_S))
     {
-        dist.z -= MOVE_INCREMENT;
+        dist.z -= context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(window, GLFW_KEY_A))
     {
-        dist.x += MOVE_INCREMENT
+        dist.x += context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(window, GLFW_KEY_D))
     {
-        dist.x -= MOVE_INCREMENT;
+        dist.x -= context->time_delta * MOVE_INCREMENT;
     }
     if( glfwGetKey(window, GLFW_KEY_SPACE) && context->velocity.y == 0 )
     {
@@ -181,7 +183,7 @@ void manageUserInput(GameContext* context)
     }
     dist = glm::rotate(dist, context->camera_rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
     context->camera_position += dist;
-    context->camera_position += context->velocity;
+    context->camera_position += context->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
     if (glfwGetKey(window, GLFW_KEY_Q))
     {
         context->camera_position = glm::vec3(0.0f);
@@ -214,7 +216,7 @@ void prepareRender(GameContext* context)
 
 void updatePhysics(GameContext* context)
 {
-    context->velocity.y += 0.002f;
+    context->velocity.y += context->time_delta * 0.8f;
     WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
     chunk->checkCollides(context);
 }
