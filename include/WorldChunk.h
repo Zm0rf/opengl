@@ -1,21 +1,26 @@
 #pragma once
 
+#include <stdio.h>
 #include <vector>
+#include <math.h>
 #include <glm/glm.hpp>
 
+class WorldChunk;
 #include "Actor.h"
+#include "GameContext.h"
 
 // TODO remove
 void renderCube(glm::vec3 position);
 
-#define CHUNK_SIZE 10
+#define CHUNK_SIZE 20
 class WorldChunk
 {
     public:
         WorldChunk();
         ~WorldChunk();
         void render();
-        void checkCollisions();
+        void checkCollides(GameContext* context);
+        // void checkCollisions();
 
     private:
         // TODO better datatype (object?)

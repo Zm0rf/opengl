@@ -54,7 +54,7 @@ int main(void)
 
 	/* GLuint projection_view_loc = glGetUniformLocation(programID, "projection_view"); */
 
-    glm::vec3 velocity(0,0,0);
+    context.velocity = glm::vec3(0,0,0);
 
     int png_width, png_height;
     GLuint font_texture = png_texture_load("data/font/monospaced_bold.png", &png_width, &png_height);
@@ -103,6 +103,7 @@ int main(void)
         context.time_now = glfwGetTime();
         context.time_delta = context.time_now - context.time_last_frame;
 
+        updatePhysics(&context);
         manageUserInput(&context);
         render(&context);
 
@@ -137,7 +138,7 @@ void manageUserInput(GameContext* context)
     if( context->camera_position.y >= 0 )
     {
         context->camera_position.y = 0;
-        /* velocity.y = 0; */
+        context->velocity.y = 0;
     }
 
     // Actor rotation
@@ -174,13 +175,13 @@ void manageUserInput(GameContext* context)
     {
         dist.x -= MOVE_INCREMENT;
     }
-    if( glfwGetKey(window, GLFW_KEY_SPACE) )
+    if( glfwGetKey(window, GLFW_KEY_SPACE) && context->velocity.y == 0 )
     {
-        /* velocity.y = -1.0f; */
+        context->velocity.y = -0.2f;
     }
     dist = glm::rotate(dist, context->camera_rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
     context->camera_position += dist;
-    /* context->camera_position += velocity; */
+    context->camera_position += context->velocity;
     if (glfwGetKey(window, GLFW_KEY_Q))
     {
         context->camera_position = glm::vec3(0.0f);
@@ -203,12 +204,19 @@ void render(GameContext* context)
     /* glBindSampler( glGetUniformLocation(programID, "test_texture"), font_texture); */
 
     // Make the cubes move :D
-    tmpRenderMovingCubes(context);
-    context->world.getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
+    tmpRenderMovingCubes(context, glm::vec3(10.0f, 0.0f, 10.0f));
+    context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
 
 }
 void prepareRender(GameContext* context)
 {
+}
+
+void updatePhysics(GameContext* context)
+{
+    context->velocity.y += 0.002f;
+    WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    chunk->checkCollides(context);
 }
 
 bool initContext(GameContext* context)
@@ -299,18 +307,28 @@ void renderCube(glm::vec3 position)
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }
 
-void tmpRenderMovingCubes(GameContext* context)
+void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
 {
-    float pos = 3.0f;
-    pos += cos(context->time_now*2.0f);
-    pos += cos(context->time_now*5.0f)*0.3;
+    float i = 3.0f;
+    i += cos(context->time_now*2.0f);
+    i += cos(context->time_now*5.0f)*0.3;
 
     // Rendering
     glUseProgram(programID);
-    renderCube(glm::vec3(pos, 0.0f, 0.0f));
-    renderCube(glm::vec3(-pos, 0.0f, 0.0f));
-    renderCube(glm::vec3(0.0f, pos, 0.0f));
-    renderCube(glm::vec3(0.0f, -pos, 0.0f));
-    renderCube(glm::vec3(0.0f, 0.0f, pos));
-    renderCube(glm::vec3(0.0f, 0.0f, -pos));
+    renderCube(pos+glm::vec3(i, 0.0f, 0.0f));
+    renderCube(pos+glm::vec3(-i, 0.0f, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, i, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, -i, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, 0.0f, i));
+    renderCube(pos+glm::vec3(0.0f, 0.0f, -i));
 }
+
+GameContext::GameContext()
+{
+    this->world = new World();
+}
+GameContext::~GameContext()
+{
+    delete this->world;
+}
+

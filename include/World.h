@@ -1,5 +1,6 @@
 #pragma once
 
+class World;
 #include "WorldChunk.h"
 
 class World
@@ -9,5 +10,5 @@ class World
         ~World();
         WorldChunk* getChunkAt(glm::vec3 pos);
     private:
-        WorldChunk tmp_chunk;
+        WorldChunk* tmp_chunk;
 };

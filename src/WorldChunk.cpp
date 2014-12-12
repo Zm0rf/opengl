@@ -10,13 +10,15 @@ WorldChunk::WorldChunk():
             for( int z=0; z<CHUNK_SIZE; z++ )
             {
                 this->data[x][y][z] = false;
-                if( x == y && y == z )
+                if( sqrt(pow(x, 2)+pow(z, 2)) == y )
                     this->data[x][y][z] = true;
+                /* if( x == y && y == z ) */
+                /*     this->data[x][y][z] = true; */
+                /* if( y == 0 ) */
+                /*     this->data[x][y][z] = true; */
             }
         }
     }
-    chunk_x += 3;
-    chunk_z += 3;
 }
 WorldChunk::~WorldChunk()
 {
@@ -36,4 +38,19 @@ void WorldChunk::render()
             }
         }
     }
+}
+void WorldChunk::checkCollides(GameContext* context)
+{
+    glm::vec3 pos = context->camera_position;
+    int x = -(int)pos.x;
+    int y = -(int)pos.y-2;
+    int z = -(int)pos.z;
+    printf("%d %d %d\n", x, y, z);
+    //
+    if( x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE )
+        return;
+    if( x < 0 || y < 0 || z < 0 )
+        return;
+    if( this->data[x][y][z] )
+        context->velocity.y = 0;
 }

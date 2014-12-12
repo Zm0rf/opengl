@@ -33,7 +33,7 @@
 // Helper stuff
 #define PI 3.1415
 #define degreesToRadians(deg) deg*(PI/180.0f)
-#define MOVE_INCREMENT 0.1f;
+#define MOVE_INCREMENT 0.03f;
 
 // Define global shader variables (TODO MOVE)
 #define ATTRIB_VERTEX_POSITION_LOC 0
@@ -49,5 +49,6 @@ bool initContext(GameContext* context);
 void onWindowResize(GLFWwindow* window, int width, int height);
 void render(GameContext* context);
 void manageUserInput(GameContext* context);
+void updatePhysics(GameContext* context);
 
-void tmpRenderMovingCubes(GameContext* context);
+void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
