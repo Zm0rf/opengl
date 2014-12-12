@@ -16,7 +16,7 @@ Debug/*
 *.v12.suo
 *.vcxproj
 *.vcxproj.filters
-
+glew32.dll
 
 #C++
 *.o

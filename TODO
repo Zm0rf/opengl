@@ -2,3 +2,6 @@ How should the testing work out? structure?
     How to setup a workflow using GTEST?
 
 Decide: Tabs vs spaces (my votes for spaces.. my config is for tabs.. :/)
+Define project structure
+Make CMakeLists.txt source all relevant cpp files automatically (without need to manually add them?)
+
