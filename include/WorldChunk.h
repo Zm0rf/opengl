@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <vector>
-#include <math.h>
 #include <glm/glm.hpp>
 
 class WorldChunk;

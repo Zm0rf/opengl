@@ -10,12 +10,8 @@ WorldChunk::WorldChunk():
             for( int z=0; z<CHUNK_SIZE; z++ )
             {
                 this->data[x][y][z] = false;
-                if( sqrt(pow(x, 2)+pow(z, 2)) == y )
+                if( (x+z)/2 == y )
                     this->data[x][y][z] = true;
-                /* if( x == y && y == z ) */
-                /*     this->data[x][y][z] = true; */
-                /* if( y == 0 ) */
-                /*     this->data[x][y][z] = true; */
             }
         }
     }
@@ -52,5 +48,7 @@ void WorldChunk::checkCollides(GameContext* context)
     if( x < 0 || y < 0 || z < 0 )
         return;
     if( this->data[x][y][z] )
+    {
         context->velocity.y = 0;
+    }
 }
