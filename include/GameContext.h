@@ -1,6 +1,8 @@
 #pragma once
 
+class GameContext;
 #include <GLFW/glfw3.h>
+
 #include "World.h"
 
 /**
@@ -9,16 +11,20 @@
 class GameContext
 {
     public:
+        GameContext();
+        ~GameContext();
+    public:
         GLFWwindow* window;
         double time_delta;
         double time_last_frame;
         double time_now;
         int width;
         int height;
-        World world;
+        World* world;
 
         glm::vec3 camera_rotation;
         glm::vec3 camera_position;
+        glm::vec3 velocity;
 
         glm::mat4 projection_matrix;
         glm::mat4 view_matrix;
@@ -27,4 +33,3 @@ class GameContext
 
         bool do_stop;
 };
-
