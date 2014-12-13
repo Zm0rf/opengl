@@ -1,6 +1,7 @@
 #pragma once
 
 static const GLfloat cube_raw_data[] = {
+  /*   X,    Y,    Z,    S,    T,  NX,  NY,  NZ, */
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 
     0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 
     0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 

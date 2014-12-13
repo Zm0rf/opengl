@@ -8,12 +8,6 @@ typedef struct {
     GLuint texcoord_buffer;
     GLuint color_buffer;
 } RenderData;
-void activate(RenderData* data)
-{
-    glBindBuffer(GL_ARRAY_BUFFER, data->vertex_buffer);   glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
-    glBindBuffer(GL_ARRAY_BUFFER, data->color_buffer);    glVertexAttribPointer(ATTRIB_VERTEX_COLOR_LOC,    3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
-    glBindBuffer(GL_ARRAY_BUFFER, data->texcoord_buffer); glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
-}
 
 int main(void)
 {
@@ -42,10 +36,10 @@ int main(void)
     RenderData render_data;
 
 
-    /* GLuint test_buffer; */
-    /* glGenBuffers(1, &test_buffer); */
-    /* glBindBuffer(GL_ARRAY_BUFFER, test_buffer); */
-    /* glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW); */
+    GLuint test_buffer;
+    glGenBuffers(1, &test_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW);
 
     // Bind shader locations.
     glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
@@ -71,11 +65,20 @@ int main(void)
     glEnableVertexAttribArray(ATTRIB_VERTEX_TEXCOORD_LOC);
 
     // Prepare rendering
-    activate(&render_data);
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.vertex_buffer); */
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    /* glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
+    glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*)0);
 
-    // glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
-    // glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.color_buffer); */
+    /* glVertexAttrib3f(ATTRIB_VERTEX_COLOR_LOC, 1.0f, 0.0f, 0.0f); */
+    glVertexAttribPointer(ATTRIB_VERTEX_COLOR_LOC,    3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.texcoord_buffer); */
     /* glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
+    glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*) (3*sizeof(GLfloat)));
+
 
     context->do_stop = false;
     while( !context->do_stop )
@@ -186,7 +189,7 @@ void render(GameContext* context)
 
     glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
 
-    /* tmpRenderMovingCubes(context, glm::vec3(10.0f, 0.0f, 10.0f)); */
+    tmpRenderMovingCubes(context, glm::vec3(10.0f, 20.0f, 10.0f));
     context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
     /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
 

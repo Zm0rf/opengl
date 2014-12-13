@@ -43,7 +43,7 @@
 #define ATTRIB_VERTEX_COLOR_LOC 1
 #define ATTRIB_VERTEX_COLOR_NAME "vertexColor"
 #define ATTRIB_VERTEX_TEXCOORD_LOC 3
-#define ATTRIB_VERTEX_TEXCOORD_NAME "textureCoordinate"
+#define ATTRIB_VERTEX_TEXCOORD_NAME "vertexTexcoord"
 #define UNIFORM_PROJECTION_VIEW_LOC 3
 
 void renderCube(glm::vec3 position);
