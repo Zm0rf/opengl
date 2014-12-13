@@ -1,4 +1,4 @@
-#include "Shader.h"
+#include "graphics/Shader.h"
 
 Shader::Shader():
     vertex_shader_id(0), fragment_shader_id(0)

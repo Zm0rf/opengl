@@ -21,5 +21,7 @@ glew32.dll
 #C++
 *.o
 
-
 .gitattributes
+
+# Persistant commit message..
+commit-message

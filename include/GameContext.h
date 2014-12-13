@@ -1,9 +1,10 @@
 #pragma once
 
 class GameContext;
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include "World.h"
+#include "graphics/Shader.h"
 
 /**
  * TODO clean this up and make it a OBJECT and not a struct of data!
@@ -14,6 +15,7 @@ class GameContext
         GameContext();
         ~GameContext();
     public:
+        Shader* shader;
         GLFWwindow* window;
         double time_delta;
         double time_last_frame;

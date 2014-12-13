@@ -4,8 +4,8 @@
 
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec3 vertexPosition_modelspace;
-layout(location = 1) in vec3 vertexColor;
-layout(location = 3) in vec2 textureCoordinate;
+layout(location = 1) in vec3 vertexColor = vec3(1.0, 0.0, 0.0);
+layout(location = 3) in vec2 textureCoordinate = vec2(0.0, 0.0);
 layout(location = 2) uniform mat4 M;
 uniform mat4 V;
 uniform mat4 P;

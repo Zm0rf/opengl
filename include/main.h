@@ -24,12 +24,11 @@
 
 //
 #include "LinkedObjectFactory.h"
-#include "png_texture_load.h"
 #include "cube_data.h"
 #include "GameContext.h"
 #include "WorldChunk.h"
 #include "World.h"
-#include "Shader.h"
+#include "graphics/Shader.h"
 
 // Helper stuff
 #define PI 3.1415
@@ -43,6 +42,8 @@
 #define ATTRIB_VERTEX_POSITION_NAME "vertexPosition"
 #define ATTRIB_VERTEX_COLOR_LOC 1
 #define ATTRIB_VERTEX_COLOR_NAME "vertexColor"
+#define ATTRIB_VERTEX_TEXCOORD_LOC 3
+#define ATTRIB_VERTEX_TEXCOORD_NAME "textureCoordinate"
 #define UNIFORM_PROJECTION_VIEW_LOC 3
 
 void renderCube(glm::vec3 position);
@@ -53,5 +54,7 @@ void onWindowResize(GLFWwindow* window, int width, int height);
 void render(GameContext* context);
 void manageUserInput(GameContext* context);
 void updatePhysics(GameContext* context);
-
 void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
+void prepareRender(GameContext* context);
+
+void nagGlErrors();

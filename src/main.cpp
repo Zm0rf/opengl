@@ -1,125 +1,108 @@
 #include "main.h"
 
 // TODO remove global variables
-GLFWwindow* window;
-GameContext context;
-GLuint programID;
+GameContext main_context;
+
+typedef struct {
+    GLuint vertex_buffer;
+    GLuint texcoord_buffer;
+    GLuint color_buffer;
+} RenderData;
+void activate(RenderData* data)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, data->vertex_buffer);   glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, data->color_buffer);    glVertexAttribPointer(ATTRIB_VERTEX_COLOR_LOC,    3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, data->texcoord_buffer); glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+}
 
 int main(void)
 {
-    if( !initContext(&context) )
+    GameContext* context = &main_context;
+    if( !initContext(context) )
     {
         fprintf(stderr, "Failed to initialize application\n");
         return -1;
     }
-
-    window = context.window;
-
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    /* GLuint programID = LoadShaders("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader"); */
-    Shader s("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader");
+    Shader shader_program("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader");
     /* Shader s("data/shader/font_shader.vert", "data/shader/font_shader.frag"); */
-    if( !s.link() )
+    if( !shader_program.link() )
     {
         fprintf(stderr, "Failed to initialize main shader\n");
         return -1;
     }
-    programID = s.getProgramId();
+    context->shader = &shader_program;
+    context->velocity = glm::vec3(0,0,0);
 
-    /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag"); */
-    /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
-    /* gui_shader.link(); */
-
-	//Create vertex buffer
-	GLuint vertex_buffer;
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
-	//Create texture coordinate buffer
-	GLuint texcoordbuffer;
-	glGenBuffers(1, &texcoordbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, texcoordbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_texture_coordinates), g_texture_coordinates, GL_STATIC_DRAW);
+    prepareRender(context);
+    RenderData render_data;
 
 
-	GLuint colorbuffer;
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+    /* GLuint test_buffer; */
+    /* glGenBuffers(1, &test_buffer); */
+    /* glBindBuffer(GL_ARRAY_BUFFER, test_buffer); */
+    /* glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW); */
 
-	/* GLuint projection_view_loc = glGetUniformLocation(programID, "projection_view"); */
+    // Bind shader locations.
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_TEXCOORD_LOC, ATTRIB_VERTEX_TEXCOORD_NAME);
 
-    context.velocity = glm::vec3(0,0,0);
+    // Setup cube data
+    glGenBuffers(1, &render_data.vertex_buffer);
+    glGenBuffers(1, &render_data.texcoord_buffer);
+    glGenBuffers(1, &render_data.color_buffer);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data.vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data.texcoord_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_texture_coordinates), g_texture_coordinates, GL_STATIC_DRAW);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data.color_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
 
-    int png_width, png_height;
-//    GLuint font_texture = png_texture_load("data/font/monospaced_bold.png", &png_width, &png_height);
-    glBindAttribLocation(programID, ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
-    glBindAttribLocation(programID, ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION_LOC);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_COLOR_LOC);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_TEXCOORD_LOC);
 
     // Prepare rendering
-    // 1rst attribute buffer : vertices
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glVertexAttribPointer(
-            ATTRIB_VERTEX_POSITION_LOC, 3,
-            GL_FLOAT, // type
-            GL_FALSE, // normalized?
-            0,        // stride
-            (void*)0  // array buffer offset
-            );
-    //
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-    glVertexAttribPointer(
-            1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-            3,                                // size
-            GL_FLOAT,                         // type
-            GL_FALSE,                         // normalized?
-            0,                                // stride
-            (void*)0                          // array buffer offset
-            );
-    //
-    glEnableVertexAttribArray(3);
-    glBindBuffer(GL_ARRAY_BUFFER, texcoordbuffer);
-    glVertexAttribPointer(
-            3,
-            2,                  // size
-            GL_FLOAT,           // type
-            GL_FALSE,           // normalized?
-            0,                  // stride
-            (void*)0            // array buffer offset
-            );
+    activate(&render_data);
 
-    onWindowResize(context.window, context.width, context.height);
+    // glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    // glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+    /* glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
 
-    context.do_stop = false;
-    while( !context.do_stop )
+    context->do_stop = false;
+    while( !context->do_stop )
     {
         // Update timing related stuff
-        context.time_last_frame = context.time_now;
-        context.time_now = glfwGetTime();
-        context.time_delta = context.time_now - context.time_last_frame;
+        context->time_last_frame = context->time_now;
+        context->time_now = glfwGetTime();
+        context->time_delta = context->time_now - context->time_last_frame;
 
-        updatePhysics(&context);
-        manageUserInput(&context);
-        render(&context);
+        updatePhysics(context);
+        manageUserInput(context);
+        glUseProgram(shader_program.getProgramId());
+        render(context);
 
         // Main loop cleanup
         // TODO is this needed?
 		/* glDisableVertexAttribArray(0); */
 
 		// Swap buffers
-		glfwSwapBuffers(context.window);
+		glfwSwapBuffers(context->window);
 		glfwPollEvents();
+        // Error handling
+        nagGlErrors();
 	}
 
 	// Cleanup VBO
-	glDeleteBuffers(1, &vertex_buffer);
+	glDeleteBuffers(1, &render_data.vertex_buffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
 
 	// Close OpenGL window and terminate GLFW
@@ -144,8 +127,8 @@ void manageUserInput(GameContext* context)
     }
 
     // Actor rotation
-    glfwGetCursorPos(window, &context->mouse_x, &context->mouse_y);
-    glfwSetCursorPos(window, context->width/2, context->height/2);
+    glfwGetCursorPos(context->window, &context->mouse_x, &context->mouse_y);
+    glfwSetCursorPos(context->window, context->width/2, context->height/2);
     context->camera_rotation.y += (context->mouse_x - context->width/2)*0.01f;
     context->camera_rotation.x += (context->mouse_y - context->height/2)*0.01f;
 
@@ -161,30 +144,30 @@ void manageUserInput(GameContext* context)
 
     // Actor movement
     glm::vec3 dist;
-    if (glfwGetKey(window, GLFW_KEY_W))
+    if (glfwGetKey(context->window, GLFW_KEY_W))
     {
         dist.z += context->time_delta * MOVE_INCREMENT;
     }
-    if (glfwGetKey(window, GLFW_KEY_S))
+    if (glfwGetKey(context->window, GLFW_KEY_S))
     {
         dist.z -= context->time_delta * MOVE_INCREMENT;
     }
-    if (glfwGetKey(window, GLFW_KEY_A))
+    if (glfwGetKey(context->window, GLFW_KEY_A))
     {
         dist.x += context->time_delta * MOVE_INCREMENT;
     }
-    if (glfwGetKey(window, GLFW_KEY_D))
+    if (glfwGetKey(context->window, GLFW_KEY_D))
     {
         dist.x -= context->time_delta * MOVE_INCREMENT;
     }
-    if( glfwGetKey(window, GLFW_KEY_SPACE) && context->velocity.y == 0 )
+    if( glfwGetKey(context->window, GLFW_KEY_SPACE) && context->velocity.y == 0 )
     {
         context->velocity.y = -0.2f;
     }
     dist = glm::rotate(dist, context->camera_rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
     context->camera_position += dist;
     context->camera_position += context->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
-    if (glfwGetKey(window, GLFW_KEY_Q))
+    if (glfwGetKey(context->window, GLFW_KEY_Q))
     {
         context->camera_position = glm::vec3(0.0f);
         context->camera_rotation = glm::vec3(0.0f);
@@ -203,15 +186,17 @@ void render(GameContext* context)
 
     glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
 
-    /* glBindSampler( glGetUniformLocation(programID, "test_texture"), font_texture); */
-
-    // Make the cubes move :D
-    tmpRenderMovingCubes(context, glm::vec3(10.0f, 0.0f, 10.0f));
+    /* tmpRenderMovingCubes(context, glm::vec3(10.0f, 0.0f, 10.0f)); */
     context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
+    /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
 
 }
 void prepareRender(GameContext* context)
 {
+    /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag"); */
+    /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
+    /* gui_shader.link(); */
+
 }
 
 void updatePhysics(GameContext* context)
@@ -259,6 +244,9 @@ bool initContext(GameContext* context)
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		return false;
 	}
+    printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
+    nagGlErrors();
+
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	// Accept fragment if it closer to the camera than the former one
@@ -278,21 +266,21 @@ bool initContext(GameContext* context)
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
-    glViewport(0, 0, context->width, context->height);
+    onWindowResize(context->window, context->width, context->height);
     return true;
 }
 
 void onWindowResize(GLFWwindow* window, int width, int height)
 {
-    context.width = width;
-    context.height = height;
-    context.projection_matrix = glm::perspective(
+    main_context.width = width;
+    main_context.height = height;
+    main_context.projection_matrix = glm::perspective(
             45.0f,
             /* 4.0f / 3.0f, */
-            (float)context.width / (float)context.height,
+            (float)main_context.width / (float)main_context.height,
             0.1f,
             100.0f);
-    glViewport(0, 0, context.width, context.height);
+    glViewport(0, 0, main_context.width, main_context.height);
 }
 
 void renderCube(glm::vec3 position)
@@ -304,8 +292,6 @@ void renderCube(glm::vec3 position)
 		position.x, position.y, position.z, 1.0f
 		);  // Changes for each model !
 	glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
-	//glm::mat4 MVP = Projection * View * Model; // Remember, matrix multiplication is the other way around
-	//glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }
 
@@ -316,7 +302,6 @@ void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
     i += cos(context->time_now*5.0f)*0.3;
 
     // Rendering
-    glUseProgram(programID);
     renderCube(pos+glm::vec3(i, 0.0f, 0.0f));
     renderCube(pos+glm::vec3(-i, 0.0f, 0.0f));
     renderCube(pos+glm::vec3(0.0f, i, 0.0f));
@@ -332,4 +317,13 @@ GameContext::GameContext()
 GameContext::~GameContext()
 {
     delete this->world;
+}
+
+void nagGlErrors()
+{
+    GLenum error = glGetError();
+    if( error != GL_NO_ERROR )
+    {
+        printf("GL ERROR %s\n", gluErrorString(error));
+    }
 }
