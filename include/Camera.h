@@ -2,11 +2,10 @@
 
 #include <glm/glm.hpp>
 
-class Actor
+class Camera
 {
     public:
         glm::vec3 position;
         glm::vec3 rotation;
-        glm::vec3 velocity;
     private:
 };

@@ -17,7 +17,7 @@
 
 // Include glm
 // - Force radius to remove deprecated behavour using degrees for rotation.
-#define GLM_FORCE_RADIANS
+// #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -46,6 +46,13 @@
 #define ATTRIB_VERTEX_TEXCOORD_NAME "vertexTexcoord"
 #define UNIFORM_PROJECTION_VIEW_LOC 3
 
+// TODO move and rethink
+typedef struct {
+    GLuint vertex_buffer;
+    GLuint texcoord_buffer;
+    GLuint color_buffer;
+} RenderData;
+
 void renderCube(glm::vec3 position);
 
 bool initContext(GameContext* context);
@@ -55,6 +62,6 @@ void render(GameContext* context);
 void manageUserInput(GameContext* context);
 void updatePhysics(GameContext* context);
 void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
-void prepareRender(GameContext* context);
+void prepareRender(GameContext* context, RenderData* render_data);
 
 void nagGlErrors();

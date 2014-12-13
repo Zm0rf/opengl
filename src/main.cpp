@@ -3,12 +3,6 @@
 // TODO remove global variables
 GameContext main_context;
 
-typedef struct {
-    GLuint vertex_buffer;
-    GLuint texcoord_buffer;
-    GLuint color_buffer;
-} RenderData;
-
 int main(void)
 {
     GameContext* context = &main_context;
@@ -29,56 +23,13 @@ int main(void)
         fprintf(stderr, "Failed to initialize main shader\n");
         return -1;
     }
+    Actor main_actor;
+    context->main_actor = &main_actor;
     context->shader = &shader_program;
-    context->velocity = glm::vec3(0,0,0);
+    context->main_actor->velocity = glm::vec3(0,0,0);
 
-    prepareRender(context);
     RenderData render_data;
-
-
-    GLuint test_buffer;
-    glGenBuffers(1, &test_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW);
-
-    // Bind shader locations.
-    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
-    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
-    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_TEXCOORD_LOC, ATTRIB_VERTEX_TEXCOORD_NAME);
-
-    // Setup cube data
-    glGenBuffers(1, &render_data.vertex_buffer);
-    glGenBuffers(1, &render_data.texcoord_buffer);
-    glGenBuffers(1, &render_data.color_buffer);
-    //
-    glBindBuffer(GL_ARRAY_BUFFER, render_data.vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-    //
-    glBindBuffer(GL_ARRAY_BUFFER, render_data.texcoord_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_texture_coordinates), g_texture_coordinates, GL_STATIC_DRAW);
-    //
-    glBindBuffer(GL_ARRAY_BUFFER, render_data.color_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION_LOC);
-    glEnableVertexAttribArray(ATTRIB_VERTEX_COLOR_LOC);
-    glEnableVertexAttribArray(ATTRIB_VERTEX_TEXCOORD_LOC);
-
-    // Prepare rendering
-    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.vertex_buffer); */
-    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
-    /* glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
-    glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*)0);
-
-    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.color_buffer); */
-    /* glVertexAttrib3f(ATTRIB_VERTEX_COLOR_LOC, 1.0f, 0.0f, 0.0f); */
-    glVertexAttribPointer(ATTRIB_VERTEX_COLOR_LOC,    3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
-    /* glBindBuffer(GL_ARRAY_BUFFER, render_data.texcoord_buffer); */
-    /* glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
-    glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*) (3*sizeof(GLfloat)));
-
+    prepareRender(context, &render_data);
 
     context->do_stop = false;
     while( !context->do_stop )
@@ -88,12 +39,18 @@ int main(void)
         context->time_now = glfwGetTime();
         context->time_delta = context->time_now - context->time_last_frame;
 
-        updatePhysics(context);
         manageUserInput(context);
+        // TODO 
+        context->camera.position = context->main_actor->position - glm::vec3(0.0, 1.5, 0.0);
+        printf("%f %f %f\n",
+                context->main_actor->position.x,
+                context->main_actor->position.y,
+                context->main_actor->position.z
+              );
+        updatePhysics(context);
         glUseProgram(shader_program.getProgramId());
         render(context);
 
-        // Main loop cleanup
         // TODO is this needed?
 		/* glDisableVertexAttribArray(0); */
 
@@ -123,26 +80,26 @@ void manageUserInput(GameContext* context)
         context->do_stop = true;
         return;
     }
-    if( context->camera_position.y >= 0 )
+    if( context->main_actor->position.y >= 0 )
     {
-        context->camera_position.y = 0;
-        context->velocity.y = 0;
+        context->main_actor->position.y = 0;
+        context->main_actor->velocity.y = 0;
     }
 
     // Actor rotation
     glfwGetCursorPos(context->window, &context->mouse_x, &context->mouse_y);
-    glfwSetCursorPos(context->window, context->width/2, context->height/2);
-    context->camera_rotation.y += (context->mouse_x - context->width/2)*0.01f;
-    context->camera_rotation.x += (context->mouse_y - context->height/2)*0.01f;
+    glfwSetCursorPos(context->window, context->window_width/2, context->window_height/2);
+    context->camera.rotation.y += (context->mouse_x - context->window_width/2)*0.01f;
+    context->camera.rotation.x += (context->mouse_y - context->window_height/2)*0.01f;
 
     // Clamp the rotation not to loop
-    if( context->camera_rotation.x < -0.5f*PI )
+    if( context->camera.rotation.x < -0.5f*PI )
     {
-        context->camera_rotation.x = -0.5f*PI;
+        context->camera.rotation.x = -0.5f*PI;
     }
-    else if( context->camera_rotation.x > 0.5f*PI )
+    else if( context->camera.rotation.x > 0.5f*PI )
     {
-        context->camera_rotation.x = 0.5f*PI;
+        context->camera.rotation.x = 0.5f*PI;
     }
 
     // Actor movement
@@ -163,17 +120,17 @@ void manageUserInput(GameContext* context)
     {
         dist.x -= context->time_delta * MOVE_INCREMENT;
     }
-    if( glfwGetKey(context->window, GLFW_KEY_SPACE) && context->velocity.y == 0 )
+    if( glfwGetKey(context->window, GLFW_KEY_SPACE) && context->main_actor->velocity.y == 0 )
     {
-        context->velocity.y = -0.2f;
+        context->main_actor->velocity.y = -0.2f;
     }
-    dist = glm::rotate(dist, context->camera_rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
-    context->camera_position += dist;
-    context->camera_position += context->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
+    dist = glm::rotate(dist, context->camera.rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
+    context->main_actor->position += dist;
+    context->main_actor->position += context->main_actor->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
     if (glfwGetKey(context->window, GLFW_KEY_Q))
     {
-        context->camera_position = glm::vec3(0.0f);
-        context->camera_rotation = glm::vec3(0.0f);
+        context->main_actor->position = glm::vec3(0.0f);
+        context->camera.rotation = glm::vec3(0.0f);
     }
 }
 
@@ -182,9 +139,9 @@ void render(GameContext* context)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     glm::mat4 View = glm::mat4(1.0f);
-    View = glm::rotate(View, context->camera_rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    View = glm::rotate(View, context->camera_rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    View = glm::translate(View, context->camera_position);
+    View = glm::rotate(View, context->camera.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    View = glm::rotate(View, context->camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    View = glm::translate(View, context->camera.position);
     glm::mat4 projection_view = context->projection_matrix * View;
 
     glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
@@ -194,17 +151,61 @@ void render(GameContext* context)
     /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
 
 }
-void prepareRender(GameContext* context)
+void prepareRender(GameContext* context, RenderData* render_data)
 {
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag"); */
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
     /* gui_shader.link(); */
 
+
+    GLuint test_buffer;
+    glGenBuffers(1, &test_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW);
+
+    // Bind shader locations.
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
+    glBindAttribLocation(context->shader->getProgramId(), ATTRIB_VERTEX_TEXCOORD_LOC, ATTRIB_VERTEX_TEXCOORD_NAME);
+
+    // Setup cube data
+    glGenBuffers(1, &render_data->vertex_buffer);
+    glGenBuffers(1, &render_data->texcoord_buffer);
+    glGenBuffers(1, &render_data->color_buffer);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data->vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data->texcoord_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_texture_coordinates), g_texture_coordinates, GL_STATIC_DRAW);
+    //
+    glBindBuffer(GL_ARRAY_BUFFER, render_data->color_buffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_color_buffer_data), g_color_buffer_data, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(ATTRIB_VERTEX_POSITION_LOC);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_COLOR_LOC);
+    glEnableVertexAttribArray(ATTRIB_VERTEX_TEXCOORD_LOC);
+
+    // Prepare rendering
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data->vertex_buffer); */
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    /* glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
+    glVertexAttribPointer(ATTRIB_VERTEX_POSITION_LOC, 3,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*)0);
+
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data->color_buffer); */
+    /* glVertexAttrib3f(ATTRIB_VERTEX_COLOR_LOC, 1.0f, 0.0f, 0.0f); */
+    glVertexAttribPointer(ATTRIB_VERTEX_COLOR_LOC,    3,    GL_FLOAT, GL_FALSE,   0,      (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, test_buffer);
+    /* glBindBuffer(GL_ARRAY_BUFFER, render_data->texcoord_buffer); */
+    /* glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   0,      (void*)0); */
+    glVertexAttribPointer(ATTRIB_VERTEX_TEXCOORD_LOC, 2,    GL_FLOAT, GL_FALSE,   5*sizeof(GLfloat),      (void*) (3*sizeof(GLfloat)));
+
 }
 
 void updatePhysics(GameContext* context)
 {
-    context->velocity.y += context->time_delta * 0.8f;
+    context->main_actor->velocity.y += context->time_delta * 0.8f;
     WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
     chunk->checkCollides(context);
 }
@@ -222,11 +223,11 @@ bool initContext(GameContext* context)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //Set GLFW Minor version to OpenGL 3.3
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    context->width = 1024;
-    context->height = 768;
+    context->window_width = 1024;
+    context->window_height = 768;
 
 	context->window = glfwCreateWindow(
-            context->width, context->height,
+            context->window_width, context->window_height,
             "OPENGL TEST :D",
             NULL, NULL);
 
@@ -269,21 +270,21 @@ bool initContext(GameContext* context)
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
-    onWindowResize(context->window, context->width, context->height);
+    onWindowResize(context->window, context->window_width, context->window_height);
     return true;
 }
 
 void onWindowResize(GLFWwindow* window, int width, int height)
 {
-    main_context.width = width;
-    main_context.height = height;
+    main_context.window_width = width;
+    main_context.window_height = height;
     main_context.projection_matrix = glm::perspective(
             45.0f,
             /* 4.0f / 3.0f, */
-            (float)main_context.width / (float)main_context.height,
+            (float)main_context.window_width / (float)main_context.window_height,
             0.1f,
             100.0f);
-    glViewport(0, 0, main_context.width, main_context.height);
+    glViewport(0, 0, main_context.window_width, main_context.window_height);
 }
 
 void renderCube(glm::vec3 position)

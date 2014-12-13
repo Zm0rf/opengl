@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.10)
 
 add_subdirectory(test)
 
+add_definitions(-DGLM_FORCE_RADIANS)
+
 # Include required dependencies
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)

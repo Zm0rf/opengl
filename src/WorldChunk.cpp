@@ -37,9 +37,9 @@ void WorldChunk::render()
 }
 void WorldChunk::checkCollides(GameContext* context)
 {
-    glm::vec3 pos = context->camera_position;
+    glm::vec3 pos = context->main_actor->position;
     int x = -(int)pos.x;
-    int y = -(int)pos.y-2;
+    int y = -(int)pos.y;
     int z = -(int)pos.z;
     // printf("%d %d %d\n", x, y, z);
     //
@@ -49,6 +49,6 @@ void WorldChunk::checkCollides(GameContext* context)
         return;
     if( this->data[x][y][z] )
     {
-        context->velocity.y = 0;
+        context->main_actor->velocity.y = 0;
     }
 }
