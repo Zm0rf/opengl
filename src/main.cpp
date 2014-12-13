@@ -41,7 +41,7 @@ int main(void)
 
         manageUserInput(context);
         // TODO 
-        context->camera.position = context->main_actor->position - glm::vec3(0.0, 1.5, 0.0);
+        context->camera.position = context->main_actor->position + glm::vec3(0.0, 1.5, 0.0);
         printf("%f %f %f\n",
                 context->main_actor->position.x,
                 context->main_actor->position.y,
@@ -80,7 +80,7 @@ void manageUserInput(GameContext* context)
         context->do_stop = true;
         return;
     }
-    if( context->main_actor->position.y >= 0 )
+    if( context->main_actor->position.y <= 0 )
     {
         context->main_actor->position.y = 0;
         context->main_actor->velocity.y = 0;
@@ -106,23 +106,23 @@ void manageUserInput(GameContext* context)
     glm::vec3 dist;
     if (glfwGetKey(context->window, GLFW_KEY_W))
     {
-        dist.z += context->time_delta * MOVE_INCREMENT;
+        dist.z -= context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(context->window, GLFW_KEY_S))
     {
-        dist.z -= context->time_delta * MOVE_INCREMENT;
+        dist.z += context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(context->window, GLFW_KEY_A))
     {
-        dist.x += context->time_delta * MOVE_INCREMENT;
+        dist.x -= context->time_delta * MOVE_INCREMENT;
     }
     if (glfwGetKey(context->window, GLFW_KEY_D))
     {
-        dist.x -= context->time_delta * MOVE_INCREMENT;
+        dist.x += context->time_delta * MOVE_INCREMENT;
     }
     if( glfwGetKey(context->window, GLFW_KEY_SPACE) && context->main_actor->velocity.y == 0 )
     {
-        context->main_actor->velocity.y = -0.2f;
+        context->main_actor->velocity.y = 0.2f;
     }
     dist = glm::rotate(dist, context->camera.rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
     context->main_actor->position += dist;
@@ -141,7 +141,7 @@ void render(GameContext* context)
     glm::mat4 View = glm::mat4(1.0f);
     View = glm::rotate(View, context->camera.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
     View = glm::rotate(View, context->camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    View = glm::translate(View, context->camera.position);
+    View = glm::translate(View, -context->camera.position);
     glm::mat4 projection_view = context->projection_matrix * View;
 
     glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
@@ -205,7 +205,7 @@ void prepareRender(GameContext* context, RenderData* render_data)
 
 void updatePhysics(GameContext* context)
 {
-    context->main_actor->velocity.y += context->time_delta * 0.8f;
+    context->main_actor->velocity.y -= context->time_delta * 0.8f;
     WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
     chunk->checkCollides(context);
 }

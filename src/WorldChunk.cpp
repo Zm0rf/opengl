@@ -38,9 +38,9 @@ void WorldChunk::render()
 void WorldChunk::checkCollides(GameContext* context)
 {
     glm::vec3 pos = context->main_actor->position;
-    int x = -(int)pos.x;
-    int y = -(int)pos.y;
-    int z = -(int)pos.z;
+    int x = (int)pos.x;
+    int y = (int)pos.y;
+    int z = (int)pos.z;
     // printf("%d %d %d\n", x, y, z);
     //
     if( x >= CHUNK_SIZE || y >= CHUNK_SIZE || z >= CHUNK_SIZE )
