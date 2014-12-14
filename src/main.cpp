@@ -42,11 +42,37 @@ int main(void)
         manageUserInput(context);
         updatePhysics(context);
         // TODO 
-        context->camera.position = context->main_actor->position + glm::vec3(0.0, 1.5, 0.0);
-        context->camera.position += glm::rotate(
-                glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel,
+        context->camera.position = context->main_actor->position;
+        /* context->camera.position += glm::vec3(0.0, 1.5, 0.0); */
+        /* context->camera.position += glm::rotate( */
+        /*         glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel, */
+        /*         context->camera.rotation.y, */
+        /*         glm::vec3(0.0f, 1.0f, 0.0f)); */
+        glm::vec3 head_bobbing = glm::vec3(0.0f);
+        head_bobbing += glm::vec3(
+                cos(context->time_now*5),
+                sin(context->time_now*2*5),
+                0.0f);
+        head_bobbing *= glm::length(context->main_actor->velocity) * 7.0f;
+        if( context->main_actor->velocity.y != 0.0f )
+            head_bobbing = glm::vec3(0.0f);
+        if( context->scroll_wheel > 0.0f )
+        {
+            head_bobbing *= 1.0f / context->scroll_wheel;
+        }
+        //
+        glm::vec3 tmp = glm::vec3(0.0f);
+        tmp += head_bobbing;
+        tmp = glm::rotate(
+                tmp + glm::vec3(0.0f, 0.0f, -1.0f) * (float)-context->scroll_wheel,
+                -context->camera.rotation.x,
+                glm::vec3(1.0f, 0.0f, 0.0f));
+        tmp = glm::rotate(
+                tmp + glm::vec3(0.0f, 2.0f, 0.0f),
                 context->camera.rotation.y,
-                glm::vec3(0.0f, 1.0f, 0.0f));
+                glm::vec3(0.0f, 1.0f, 0.0f)
+                );
+        context->camera.position += tmp;
 
         printf("(%f %f %f) (%f %f %f) (%f)\n",
                 context->main_actor->position.x, context->main_actor->position.y, context->main_actor->position.z,
