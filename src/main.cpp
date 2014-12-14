@@ -40,14 +40,20 @@ int main(void)
         context->time_delta = context->time_now - context->time_last_frame;
 
         manageUserInput(context);
+        updatePhysics(context);
         // TODO 
         context->camera.position = context->main_actor->position + glm::vec3(0.0, 1.5, 0.0);
-        printf("%f %f %f\n",
-                context->main_actor->position.x,
-                context->main_actor->position.y,
-                context->main_actor->position.z
+        context->camera.position += glm::rotate(
+                glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel,
+                context->camera.rotation.y,
+                glm::vec3(0.0f, 1.0f, 0.0f));
+
+        printf("(%f %f %f) (%f %f %f) (%f)\n",
+                context->main_actor->position.x, context->main_actor->position.y, context->main_actor->position.z,
+                context->main_actor->rotation.x, context->main_actor->rotation.y, context->main_actor->rotation.z,
+                context->scroll_wheel
+
               );
-        updatePhysics(context);
         glUseProgram(shader_program.getProgramId());
         render(context);
 
@@ -80,17 +86,12 @@ void manageUserInput(GameContext* context)
         context->do_stop = true;
         return;
     }
-    if( context->main_actor->position.y <= 0 )
-    {
-        context->main_actor->position.y = 0;
-        context->main_actor->velocity.y = 0;
-    }
 
     // Actor rotation
     glfwGetCursorPos(context->window, &context->mouse_x, &context->mouse_y);
     glfwSetCursorPos(context->window, context->window_width/2, context->window_height/2);
-    context->camera.rotation.y += (context->mouse_x - context->window_width/2)*0.01f;
-    context->camera.rotation.x += (context->mouse_y - context->window_height/2)*0.01f;
+    context->camera.rotation.y -= (context->mouse_x - context->window_width/2)*0.01f;
+    context->camera.rotation.x += INVERT_MOUSE_MODIFIER * (context->mouse_y - context->window_height/2)*0.01f;
 
     // Clamp the rotation not to loop
     if( context->camera.rotation.x < -0.5f*PI )
@@ -124,14 +125,20 @@ void manageUserInput(GameContext* context)
     {
         context->main_actor->velocity.y = 0.2f;
     }
-    dist = glm::rotate(dist, context->camera.rotation.y, glm::vec3(0.0f, -1.0f, 0.0f));
-    context->main_actor->position += dist;
-    context->main_actor->position += context->main_actor->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
+    dist = glm::rotate(dist, context->camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    context->main_actor->velocity.x = dist.x;
+    context->main_actor->velocity.z = dist.z;
     if (glfwGetKey(context->window, GLFW_KEY_Q))
     {
         context->main_actor->position = glm::vec3(0.0f);
         context->camera.rotation = glm::vec3(0.0f);
     }
+
+    // Rotate the actor.. TODO move this.
+    context->main_actor->rotation = glm::vec3(
+            0.0f,
+            context->camera.rotation.y,
+            0.0f);
 }
 
 void render(GameContext* context)
@@ -140,15 +147,20 @@ void render(GameContext* context)
 
     glm::mat4 View = glm::mat4(1.0f);
     View = glm::rotate(View, context->camera.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    View = glm::rotate(View, context->camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    View = glm::rotate(View, context->camera.rotation.y, -glm::vec3(0.0f, 1.0f, 0.0f));
     View = glm::translate(View, -context->camera.position);
     glm::mat4 projection_view = context->projection_matrix * View;
 
     glUniformMatrix4fv(UNIFORM_PROJECTION_VIEW_LOC, 1, GL_FALSE, &projection_view[0][0]);
 
+    // Render the player..
+    renderCube(
+            context->main_actor->position,
+            context->main_actor->rotation,
+            -glm::vec3(0.5f, 0.0f, 0.5f));
+
     tmpRenderMovingCubes(context, glm::vec3(10.0f, 20.0f, 10.0f));
     context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
-    /* renderCube(glm::vec3(0.0f, 0.0f, 0.0f)); */
 
 }
 void prepareRender(GameContext* context, RenderData* render_data)
@@ -206,8 +218,18 @@ void prepareRender(GameContext* context, RenderData* render_data)
 void updatePhysics(GameContext* context)
 {
     context->main_actor->velocity.y -= context->time_delta * 0.8f;
+
     WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
     chunk->checkCollides(context);
+
+    context->main_actor->position += context->main_actor->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);
+
+    // Make the player not fall through the world when we have no block (or chunk) beneath him/her
+    if( context->main_actor->position.y <= 0 )
+    {
+        context->main_actor->position.y = 0;
+        context->main_actor->velocity.y = 0;
+    }
 }
 
 bool initContext(GameContext* context)
@@ -232,6 +254,7 @@ bool initContext(GameContext* context)
             NULL, NULL);
 
     glfwSetWindowSizeCallback(context->window, onWindowResize);
+    glfwSetScrollCallback(context->window, onScroll);
 
 	if (context->window == NULL)
     {
@@ -286,15 +309,23 @@ void onWindowResize(GLFWwindow* window, int width, int height)
             100.0f);
     glViewport(0, 0, main_context.window_width, main_context.window_height);
 }
-
-void renderCube(glm::vec3 position)
+void onScroll(GLFWwindow* window, double x, double y)
 {
-	glm::mat4 Model = glm::mat4(
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		position.x, position.y, position.z, 1.0f
-		);  // Changes for each model !
+    main_context.scroll_wheel += y;
+    if( main_context.scroll_wheel < 0 )
+        main_context.scroll_wheel = 0;
+}
+
+void renderCube(glm::vec3 position, glm::vec3 rotation, glm::vec3 origo)
+{
+	glm::mat4 Model = glm::mat4(1.0f);
+		/* 1.0f, 0.0f, 0.0f, 0.0f, */
+		/* 0.0f, 1.0f, 0.0f, 0.0f, */
+		/* 0.0f, 0.0f, 1.0f, 0.0f, */
+		/* position.x, position.y, position.z, 1.0f); */
+    Model = glm::translate(Model, position);
+    Model = glm::rotate(Model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    Model = glm::translate(Model, origo);
 	glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }

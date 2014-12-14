@@ -34,9 +34,11 @@
 #define PI 3.1415
 #define degreesToRadians(deg) deg*(PI/180.0f)
 // movement increment in meters (blocks) per second
-#define MOVE_INCREMENT 12.0f
+#define MOVE_INCREMENT 4.0f
 #define VELOCITY_INCREMENT 200.0f
 
+// TODO solve better (added this to mark where to enable inverted mouse)
+#define INVERT_MOUSE_MODIFIER 1
 // Define global shader variables (TODO MOVE)
 #define ATTRIB_VERTEX_POSITION_LOC 0
 #define ATTRIB_VERTEX_POSITION_NAME "vertexPosition"
@@ -53,11 +55,10 @@ typedef struct {
     GLuint color_buffer;
 } RenderData;
 
-void renderCube(glm::vec3 position);
-
 bool initContext(GameContext* context);
 
 void onWindowResize(GLFWwindow* window, int width, int height);
+void onScroll(GLFWwindow* window, double x, double y);
 void render(GameContext* context);
 void manageUserInput(GameContext* context);
 void updatePhysics(GameContext* context);

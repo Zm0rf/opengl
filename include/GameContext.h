@@ -21,6 +21,8 @@ class GameContext
         Actor* main_actor;
         Camera camera;
 
+        // TODO move
+        double scroll_wheel;
         // TODO move the shader to a grapihcs/render/model-related context.
         Shader* shader;
         double time_now, time_last_frame, time_delta;
