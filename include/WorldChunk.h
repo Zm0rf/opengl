@@ -36,16 +36,18 @@ class WorldChunk
 {
     public:
         WorldChunk();
+        WorldChunk(long x, long y, long z);
         ~WorldChunk();
         void render();
         void checkCollides(GameContext* context);
         Block getBlockAt(glm::vec3 pos);
 
     private:
+        void initDummyData();
         // TODO better datatype (object?)
         BlockData data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
-        int chunk_x;
-        int chunk_y; // salsa
-        int chunk_z;
+        long chunk_x;
+        long chunk_y; // salsa
+        long chunk_z;
         std::vector<Actor> actor_list;
 };

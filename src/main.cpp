@@ -144,7 +144,17 @@ void render(GameContext* context)
             -glm::vec3(0.5f, 0.0f, 0.5f));
 
     tmpRenderMovingCubes(context, glm::vec3(10.0f, 20.0f, 10.0f));
-    context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
+    for( long i=0; i< WORLD_CACHE_SIZE; i++ )
+    {
+        for( long j=0; j< WORLD_CACHE_SIZE; j++ )
+        {
+            WorldChunk* chunk = context->world->getChunkAt(glm::vec3(i, 0.0f, j));
+            if( chunk == NULL )
+                continue;
+            chunk->render();
+        }
+    }
+    /* context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render(); */
 
     // TODO is this needed?
     /* glDisableVertexAttribArray(0); */
@@ -224,6 +234,8 @@ void updatePhysics(GameContext* context)
     context->main_actor->velocity.y -= context->time_delta * 0.8f;
 
     WorldChunk* chunk = context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    chunk->checkCollides(context);
+    chunk = context->world->getChunkAt(glm::vec3(1.0f, 0.0f, 0.0f));
     chunk->checkCollides(context);
 
     context->main_actor->position += context->main_actor->velocity * (float)(context->time_delta * VELOCITY_INCREMENT);

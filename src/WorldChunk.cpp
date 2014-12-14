@@ -3,6 +3,15 @@
 WorldChunk::WorldChunk():
     chunk_x(0), chunk_y(0), chunk_z(0)
 {
+    this->initDummyData();
+}
+WorldChunk::WorldChunk(long x, long y, long z):
+    chunk_x(x*CHUNK_SIZE), chunk_y(y*CHUNK_SIZE), chunk_z(z*CHUNK_SIZE)
+{
+    this->initDummyData();
+}
+void WorldChunk::initDummyData()
+{
     for( int x=0; x<CHUNK_SIZE; x++ )
     {
         for( int y=0; y<CHUNK_SIZE; y++ )
@@ -41,6 +50,7 @@ void WorldChunk::render()
         }
     }
 }
+
 Block WorldChunk::getBlockAt(glm::vec3 pos)
 {
     Block b;
@@ -59,9 +69,12 @@ Block WorldChunk::getBlockAt(glm::vec3 pos)
     b.z = z;
     return b;
 }
+
 void WorldChunk::checkCollides(GameContext* context)
 {
-    Block b = this->getBlockAt(context->main_actor->position + context->main_actor->velocity);
+    glm::vec3 pos = context->main_actor->position;
+    pos -= glm::vec3(this->chunk_x, this->chunk_y, this->chunk_z);
+    Block b = this->getBlockAt(pos + context->main_actor->velocity);
     glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
     if( b.isValid() && b.data->passable)
     {
