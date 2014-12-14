@@ -26,69 +26,30 @@ int main(void)
     Actor main_actor;
     context->main_actor = &main_actor;
     context->shader = &shader_program;
+    //
     context->main_actor->velocity = glm::vec3(0,0,0);
+    context->main_actor->position = glm::vec3(10.0f, 4.0f, 10.0f);
 
     RenderData render_data;
     prepareRender(context, &render_data);
 
     context->do_stop = false;
-    while( !context->do_stop )
+    while( !context->do_stop || glfwWindowShouldClose(context->window) )
     {
-        // Update timing related stuff
-        context->time_last_frame = context->time_now;
-        context->time_now = glfwGetTime();
-        context->time_delta = context->time_now - context->time_last_frame;
-
+        tick(context);
         manageUserInput(context);
         updatePhysics(context);
-        // TODO 
-        context->camera.position = context->main_actor->position;
-        /* context->camera.position += glm::vec3(0.0, 1.5, 0.0); */
-        /* context->camera.position += glm::rotate( */
-        /*         glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel, */
-        /*         context->camera.rotation.y, */
-        /*         glm::vec3(0.0f, 1.0f, 0.0f)); */
-        glm::vec3 head_bobbing = glm::vec3(0.0f);
-        head_bobbing += glm::vec3(
-                cos(context->time_now*5),
-                sin(context->time_now*2*5),
-                0.0f);
-        head_bobbing *= glm::length(context->main_actor->velocity) * 7.0f;
-        if( context->main_actor->velocity.y != 0.0f )
-            head_bobbing = glm::vec3(0.0f);
-        if( context->scroll_wheel > 0.0f )
-        {
-            head_bobbing *= 1.0f / context->scroll_wheel;
-        }
-        //
-        glm::vec3 tmp = glm::vec3(0.0f);
-        tmp += head_bobbing;
-        tmp = glm::rotate(
-                tmp + glm::vec3(0.0f, 0.0f, -1.0f) * (float)-context->scroll_wheel,
-                -context->camera.rotation.x,
-                glm::vec3(1.0f, 0.0f, 0.0f));
-        tmp = glm::rotate(
-                tmp + glm::vec3(0.0f, 2.0f, 0.0f),
-                context->camera.rotation.y,
-                glm::vec3(0.0f, 1.0f, 0.0f)
-                );
-        context->camera.position += tmp;
-
-        printf("(%f %f %f) (%f %f %f) (%f)\n",
-                context->main_actor->position.x, context->main_actor->position.y, context->main_actor->position.z,
-                context->main_actor->rotation.x, context->main_actor->rotation.y, context->main_actor->rotation.z,
-                context->scroll_wheel
-
-              );
-        glUseProgram(shader_program.getProgramId());
         render(context);
 
-        // TODO is this needed?
-		/* glDisableVertexAttribArray(0); */
+        // Swap buffers
+        glfwSwapBuffers(context->window);
+        glfwPollEvents();
 
-		// Swap buffers
-		glfwSwapBuffers(context->window);
-		glfwPollEvents();
+        /* printf("(%f %f %f) (%f %f %f) (%f)\n", */
+        /*         context->main_actor->position.x, context->main_actor->position.y, context->main_actor->position.z, */
+        /*         context->main_actor->rotation.x, context->main_actor->rotation.y, context->main_actor->rotation.z, */
+        /*         context->scroll_wheel */
+        /*       ); */
         // Error handling
         nagGlErrors();
 	}
@@ -105,13 +66,13 @@ int main(void)
 
 void manageUserInput(GameContext* context)
 {
-    // Close the application if the user wants to.
-    if( (glfwGetKey(context->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            || glfwWindowShouldClose(context->window) )
-    {
-        context->do_stop = true;
-        return;
-    }
+    /* // Close the application if the user wants to. */
+    /* if( (glfwGetKey(context->window, GLFW_KEY_ESCAPE) == GLFW_PRESS) */
+    /*         || glfwWindowShouldClose(context->window) ) */
+    /* { */
+    /*     context->do_stop = true; */
+    /*     return; */
+    /* } */
 
     // Actor rotation
     glfwGetCursorPos(context->window, &context->mouse_x, &context->mouse_y);
@@ -133,19 +94,19 @@ void manageUserInput(GameContext* context)
     glm::vec3 dist;
     if (glfwGetKey(context->window, GLFW_KEY_W))
     {
-        dist.z -= context->time_delta * MOVE_INCREMENT;
+        dist.z -= context->time_delta * context->movement_speed;
     }
     if (glfwGetKey(context->window, GLFW_KEY_S))
     {
-        dist.z += context->time_delta * MOVE_INCREMENT;
+        dist.z += context->time_delta * context->movement_speed;
     }
     if (glfwGetKey(context->window, GLFW_KEY_A))
     {
-        dist.x -= context->time_delta * MOVE_INCREMENT;
+        dist.x -= context->time_delta * context->movement_speed;
     }
     if (glfwGetKey(context->window, GLFW_KEY_D))
     {
-        dist.x += context->time_delta * MOVE_INCREMENT;
+        dist.x += context->time_delta * context->movement_speed;
     }
     if( glfwGetKey(context->window, GLFW_KEY_SPACE) && context->main_actor->velocity.y == 0 )
     {
@@ -154,11 +115,6 @@ void manageUserInput(GameContext* context)
     dist = glm::rotate(dist, context->camera.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     context->main_actor->velocity.x = dist.x;
     context->main_actor->velocity.z = dist.z;
-    if (glfwGetKey(context->window, GLFW_KEY_Q))
-    {
-        context->main_actor->position = glm::vec3(0.0f);
-        context->camera.rotation = glm::vec3(0.0f);
-    }
 
     // Rotate the actor.. TODO move this.
     context->main_actor->rotation = glm::vec3(
@@ -169,7 +125,9 @@ void manageUserInput(GameContext* context)
 
 void render(GameContext* context)
 {
+    glUseProgram(context->shader->getProgramId());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    setupCamera(context);
 
     glm::mat4 View = glm::mat4(1.0f);
     View = glm::rotate(View, context->camera.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -188,9 +146,29 @@ void render(GameContext* context)
     tmpRenderMovingCubes(context, glm::vec3(10.0f, 20.0f, 10.0f));
     context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render();
 
+    // TODO is this needed?
+    /* glDisableVertexAttribArray(0); */
 }
 void prepareRender(GameContext* context, RenderData* render_data)
 {
+    // Enable depth test
+    glEnable(GL_DEPTH_TEST);
+    // Accept fragment if it closer to the camera than the former one
+    glDepthFunc(GL_LESS);
+
+    // Do not draw the faces that is pointed away from the camera
+    /* glEnable(GL_CULL_FACE); */
+    //
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    /* glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR); */
+    /* glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA); */
+
+    // Dark blue background
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+
+    // Enable vsync
+    glfwSwapInterval(1);
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/GuiShader.frag"); */
     /* Shader gui_shader("data/shader/GuiShader.vert", "data/shader/SimpleFragmentShader.fragmentshader"); */
     /* gui_shader.link(); */
@@ -280,7 +258,8 @@ bool initContext(GameContext* context)
             NULL, NULL);
 
     glfwSetWindowSizeCallback(context->window, onWindowResize);
-    glfwSetScrollCallback(context->window, onScroll);
+    glfwSetScrollCallback(context->window, onMouseScroll);
+    glfwSetKeyCallback(context->window, onKey);
 
 	if (context->window == NULL)
     {
@@ -300,24 +279,8 @@ bool initContext(GameContext* context)
     printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
     nagGlErrors();
 
-	// Enable depth test
-	glEnable(GL_DEPTH_TEST);
-	// Accept fragment if it closer to the camera than the former one
-	glDepthFunc(GL_LESS);
-
-    // Do not draw the faces that is pointed away from the camera
-    /* glEnable(GL_CULL_FACE); */
-    //
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    /* glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR); */
-    /* glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA); */
-
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(context->window, GLFW_STICKY_KEYS, GL_TRUE);
-
-	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
     onWindowResize(context->window, context->window_width, context->window_height);
     return true;
@@ -335,7 +298,7 @@ void onWindowResize(GLFWwindow* window, int width, int height)
             100.0f);
     glViewport(0, 0, main_context.window_width, main_context.window_height);
 }
-void onScroll(GLFWwindow* window, double x, double y)
+void onMouseScroll(GLFWwindow* window, double x, double y)
 {
     main_context.scroll_wheel += y;
     if( main_context.scroll_wheel < 0 )
@@ -374,6 +337,7 @@ void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
 GameContext::GameContext()
 {
     this->world = new World();
+    this->movement_speed = 4.0f;
 }
 GameContext::~GameContext()
 {
@@ -387,4 +351,74 @@ void nagGlErrors()
     {
         printf("GL ERROR %s\n", gluErrorString(error));
     }
+}
+void setupCamera(GameContext* context)
+{
+    context->camera.position = context->main_actor->position;
+    /* context->camera.position += glm::vec3(0.0, 1.5, 0.0); */
+    /* context->camera.position += glm::rotate( */
+    /*         glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel, */
+    /*         context->camera.rotation.y, */
+    /*         glm::vec3(0.0f, 1.0f, 0.0f)); */
+    glm::vec3 head_bobbing = glm::vec3(0.0f);
+    head_bobbing += glm::vec3(
+            cos(context->time_now*5),
+            sin(context->time_now*2*5),
+            0.0f);
+    head_bobbing *= glm::length(context->main_actor->velocity) * 7.0f;
+    if( context->main_actor->velocity.y != 0.0f )
+        head_bobbing = glm::vec3(0.0f);
+    if( context->scroll_wheel > 0.0f )
+    {
+        head_bobbing *= 1.0f / context->scroll_wheel;
+    }
+    //
+    glm::vec3 tmp = glm::vec3(0.0f);
+    tmp += head_bobbing;
+    tmp = glm::rotate(
+            tmp + glm::vec3(0.0f, 0.0f, -1.0f) * (float)-context->scroll_wheel,
+            -context->camera.rotation.x,
+            glm::vec3(1.0f, 0.0f, 0.0f));
+    tmp = glm::rotate(
+            tmp + glm::vec3(0.0f, 2.0f, 0.0f),
+            context->camera.rotation.y,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+            );
+    context->camera.position += tmp;
+}
+void onKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    GameContext* context = &main_context;
+    if( action == GLFW_PRESS )
+        return;
+    switch( key )
+    {
+        case GLFW_KEY_ESCAPE:
+            // Halt the program
+            context->do_stop = true;
+            break;
+        case GLFW_KEY_Q:
+            // reset the game state
+            context->main_actor->position = glm::vec3(0.0f);
+            context->camera.rotation = glm::vec3(0.0f);
+            break;
+        case GLFW_KEY_C:
+            // Clear the default color to see if any changes exists.
+            glClearColor(0.0f, 0.1f, 0.0f, 0.0f);
+            break;
+        case GLFW_KEY_T:
+            // Toggle moving slow and fast.
+            if( context->movement_speed >= 4.0f )
+                context->movement_speed = 0.4f;
+            else
+                context->movement_speed = 4.0f;
+            break;
+    }
+}
+void tick(GameContext* context)
+{
+    // Update timing related stuff
+    context->time_last_frame = context->time_now;
+    context->time_now = glfwGetTime();
+    context->time_delta = context->time_now - context->time_last_frame;
 }

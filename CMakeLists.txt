@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.10)
 add_subdirectory(test)
 
 add_definitions(-DGLM_FORCE_RADIANS)
+list( APPEND CMAKE_CXX_FLAGS "-std=c++11" )
 
 # Include required dependencies
 find_package(PkgConfig REQUIRED)

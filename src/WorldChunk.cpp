@@ -9,9 +9,15 @@ WorldChunk::WorldChunk():
         {
             for( int z=0; z<CHUNK_SIZE; z++ )
             {
-                this->data[x][y][z] = false;
+                this->data[x][y][z].passable = false;
                 if( (x+z)/2 == y )
-                    this->data[x][y][z] = true;
+                    this->data[x][y][z].passable = true;
+                if( x == z && x == 12 && y == 0 )
+                    this->data[x][y][z].passable = true;
+                if( x == 15 && z == 0 )
+                    this->data[x][y][z].passable = true;
+                if( x > 15 && y == 0 )
+                    this->data[x][y][z].passable = true;
             }
         }
     }
@@ -27,7 +33,7 @@ void WorldChunk::render()
         {
             for( int z=0; z<CHUNK_SIZE; z++ )
             {
-                if( this->data[x][y][z] )
+                if( this->data[x][y][z].passable )
                 {
                     renderCube(glm::vec3(this->chunk_x+x, this->chunk_y+y, this->chunk_z+z));
                 }
@@ -35,61 +41,48 @@ void WorldChunk::render()
         }
     }
 }
-/* glm::vec3 WorldChunk::foo(glm::vec3 point) */
-/* { */
-/*     int x = (int)point.x; */
-/*     int y = (int)point.y; */
-/*     int z = (int)point.z; */
-/*     // printf("%d %d %d\n", x, y, z); */
-/*     // */
-/*     if( x >= CHUNK_SIZE || x < 0 */
-/*         || y >= CHUNK_SIZE || y < 0 */
-/*         || z >= CHUNK_SIZE || z < 0 ) */
-/*     { */
-/*         return glm::vec3(0.0f); */
-/*     } */
-/*     if( this->data[x][y][z] ) */
-/*     { */
-/*         float xd = (point.x - x) + 0.5f; */
-/*         float zd = (point.z - z) + 0.5f; */
-/*         float yd = (point.y - y) + 0.5f; */
-/*         /1* if( xd > zd ) *1/ */
-/*         /1*     xd = 0.0f; *1/ */
-/*         /1* else *1/ */
-/*         /1*     zd = 0.0f; *1/ */
-/*         /1* printf("COLISION %f %f %f\n", xd, zd, yd); *1/ */
-/*         /1* yd=0; *1/ */
-/*         /1* context->main_actor->velocity = glm::vec3(xd, yd, zd) * 0.1f; *1/ */
-/*         /1* context->main_actor->velocity.y = 0; *1/ */
-/*         /1* return glm::vec4; *1/ */
-/*         return glm::vec3(xd, yd, zd); */
-/*     } */
-/*     return glm::vec3(0.0); */
-/* } */
-void WorldChunk::checkCollides(GameContext* context)
+Block WorldChunk::getBlockAt(glm::vec3 pos)
 {
-    // Get colliding block location
-    // Calculate collision normal vector by getting the normal for each possible collission point.
-    // Decrement velocity with the normal vector to prevent 
-
-    // TODO remove following (dummy code)
-    glm::vec3 point = context->main_actor->position;
-    int x = (int)point.x;
-    int y = (int)point.y;
-    int z = (int)point.z;
-    //
+    Block b;
+    int x = (int)pos.x;
+    int y = (int)pos.y;
+    int z = (int)pos.z;
     if(    x >= CHUNK_SIZE || x < 0
         || y >= CHUNK_SIZE || y < 0
         || z >= CHUNK_SIZE || z < 0 )
     {
-        return;
+        return b;
     }
-    if( this->data[x][y][z] )
+    b.data = &this->data[x][y][z];
+    b.x = x;
+    b.y = y;
+    b.z = z;
+    return b;
+}
+void WorldChunk::checkCollides(GameContext* context)
+{
+    Block b = this->getBlockAt(context->main_actor->position + context->main_actor->velocity);
+    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
+    if( b.isValid() && b.data->passable)
     {
-        float xd = (point.x - x) + 0.5f;
-        float zd = (point.z - z) + 0.5f;
-        float yd = (point.y - y) + 0.5f;
-        if( context->main_actor->velocity.y < 0 )
-            context->main_actor->velocity.y = 0;
+        glClearColor(0.3f, 0.0f, 0.0f, 0.0f);
+        context->main_actor->position.y = this->chunk_y + b.y + 1.0f;
+        context->main_actor->velocity.y = 0;
     }
+    else
+    {
+        b = this->getBlockAt(
+                context->main_actor->position +
+                context->main_actor->velocity +
+                glm::vec3(0.0f, context->main_actor->height, 0.0f));
+        if( b.isValid() && b.data->passable )
+        {
+            glClearColor(0.3f, 0.2f, 0.0f, 0.0f);
+            context->main_actor->position.y = this->chunk_y + b.y - context->main_actor->height;
+            context->main_actor->velocity.y = -0.001f;
+        }
+    }
+    std::vector<glm::vec3> pts = {
+        glm::vec3(0.0f, 0.0f, 0.0f)
+    };
 }

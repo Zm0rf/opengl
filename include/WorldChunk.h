@@ -15,6 +15,22 @@ void renderCube(
         glm::vec3 rotation = glm::vec3(0.0f),
         glm::vec3 origo = glm::vec3(0.0f));
 
+class BlockData
+{
+    public:
+        bool passable;
+};
+class Block
+{
+    public:
+        Block(): data(NULL){};
+        bool isValid() { return this->data != NULL; }
+        glm::vec3 toVec() { return glm::vec3(this->x, this->y, this->z); }
+
+        int x, y, z;
+        BlockData* data;
+};
+
 #define CHUNK_SIZE 20
 class WorldChunk
 {
@@ -23,11 +39,11 @@ class WorldChunk
         ~WorldChunk();
         void render();
         void checkCollides(GameContext* context);
-        /* glm::vec3 foo(glm::vec3 point); */
+        Block getBlockAt(glm::vec3 pos);
 
     private:
         // TODO better datatype (object?)
-        bool data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+        BlockData data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
         int chunk_x;
         int chunk_y; // salsa
         int chunk_z;

@@ -34,7 +34,6 @@
 #define PI 3.1415
 #define degreesToRadians(deg) deg*(PI/180.0f)
 // movement increment in meters (blocks) per second
-#define MOVE_INCREMENT 4.0f
 #define VELOCITY_INCREMENT 200.0f
 
 // TODO solve better (added this to mark where to enable inverted mouse)
@@ -57,12 +56,29 @@ typedef struct {
 
 bool initContext(GameContext* context);
 
+// GLFW callbacks
 void onWindowResize(GLFWwindow* window, int width, int height);
-void onScroll(GLFWwindow* window, double x, double y);
+void onMouseScroll(GLFWwindow* window, double x, double y);
+/**
+ * Handle key-presses that fires an action.
+ * polling using glfwGetKey will be used for functions that better fitt polling.
+ * e.g. WASD will be polled, open inventory will be abstracted to onKey
+ */
+void onKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+//
 void render(GameContext* context);
 void manageUserInput(GameContext* context);
 void updatePhysics(GameContext* context);
 void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
 void prepareRender(GameContext* context, RenderData* render_data);
+/**
+ * Position and rotate camera.
+ */
+void setupCamera(GameContext* context);
+/**
+ * Update GameContext time related data. (e.g. time_delta)
+ */
+void tick(GameContext* context);
 
 void nagGlErrors();

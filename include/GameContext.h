@@ -39,4 +39,7 @@ class GameContext
 
         // TODO move.
         bool do_stop;
+
+        // (blocks/second)
+        float movement_speed;
 };
