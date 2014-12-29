@@ -1,16 +1,30 @@
 #include "main.h"
 
-// TODO remove global variables
-GameContext main_context;
 
+Game game;
 int main(void)
 {
-    GameContext* context = &main_context;
-    if( !initContext(context) )
-    {
-        fprintf(stderr, "Failed to initialize application\n");
-        return -1;
-    }
+    glfwSetErrorCallback([](int error_code, const char* error_description)
+            {
+                fprintf(stderr, "GLFW error (%2$d): %1$s\n", error_description, error_code);
+            });
+
+
+    GameContext* context = game.getContext();
+
+    glfwSetWindowSizeCallback(context->window, Game::glfwWindowSizeCallback);
+    onWindowResize(context, context->window, context->window_width, context->window_height);
+
+    printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
+    nagGlErrors();
+
+
+    InputHandler input_handler;
+    input_handler.context = context;
+    InputHandler::activate(&input_handler);
+    InputHandler::getActiveHandler()->context = context;
+
+
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
     glBindVertexArray(VertexArrayID);
@@ -44,12 +58,6 @@ int main(void)
         // Swap buffers
         glfwSwapBuffers(context->window);
         glfwPollEvents();
-
-        /* printf("(%f %f %f) (%f %f %f) (%f)\n", */
-        /*         context->main_actor->position.x, context->main_actor->position.y, context->main_actor->position.z, */
-        /*         context->main_actor->rotation.x, context->main_actor->rotation.y, context->main_actor->rotation.z, */
-        /*         context->scroll_wheel */
-        /*       ); */
         // Error handling
         nagGlErrors();
 	}
@@ -64,16 +72,9 @@ int main(void)
 	return 0;
 }
 
+
 void manageUserInput(GameContext* context)
 {
-    /* // Close the application if the user wants to. */
-    /* if( (glfwGetKey(context->window, GLFW_KEY_ESCAPE) == GLFW_PRESS) */
-    /*         || glfwWindowShouldClose(context->window) ) */
-    /* { */
-    /*     context->do_stop = true; */
-    /*     return; */
-    /* } */
-
     // Actor rotation
     glfwGetCursorPos(context->window, &context->mouse_x, &context->mouse_y);
     glfwSetCursorPos(context->window, context->window_width/2, context->window_height/2);
@@ -248,74 +249,6 @@ void updatePhysics(GameContext* context)
     }
 }
 
-bool initContext(GameContext* context)
-{
-	// Initialise GLFW
-	if (!glfwInit())
-	{
-		fprintf(stderr, "Failed to initialize GLFW\n");
-		return false;
-	}
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //Set GLFW Major version to OpenGL 3.3
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //Set GLFW Minor version to OpenGL 3.3
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    context->window_width = 1024;
-    context->window_height = 768;
-
-	context->window = glfwCreateWindow(
-            context->window_width, context->window_height,
-            "OPENGL TEST :D",
-            NULL, NULL);
-
-    glfwSetWindowSizeCallback(context->window, onWindowResize);
-    glfwSetScrollCallback(context->window, onMouseScroll);
-    glfwSetKeyCallback(context->window, onKey);
-
-	if (context->window == NULL)
-    {
-		fprintf(stderr, "Failed to open GLFW window.\n");
-		glfwTerminate();
-		return false;
-	}
-	glfwMakeContextCurrent(context->window);
-
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK)
-    {
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		return false;
-	}
-    printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
-    nagGlErrors();
-
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(context->window, GLFW_STICKY_KEYS, GL_TRUE);
-
-    onWindowResize(context->window, context->window_width, context->window_height);
-    return true;
-}
-
-void onWindowResize(GLFWwindow* window, int width, int height)
-{
-    main_context.window_width = width;
-    main_context.window_height = height;
-    main_context.projection_matrix = glm::perspective(
-            45.0f,
-            /* 4.0f / 3.0f, */
-            (float)main_context.window_width / (float)main_context.window_height,
-            0.1f,
-            100.0f);
-    glViewport(0, 0, main_context.window_width, main_context.window_height);
-}
-void onMouseScroll(GLFWwindow* window, double x, double y)
-{
-    main_context.scroll_wheel += y;
-    if( main_context.scroll_wheel < 0 )
-        main_context.scroll_wheel = 0;
-}
 
 void renderCube(glm::vec3 position, glm::vec3 rotation, glm::vec3 origo)
 {
@@ -346,11 +279,6 @@ void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
     renderCube(pos+glm::vec3(0.0f, 0.0f, -i));
 }
 
-GameContext::GameContext()
-{
-    this->world = new World();
-    this->movement_speed = 4.0f;
-}
 GameContext::~GameContext()
 {
     delete this->world;
@@ -367,11 +295,6 @@ void nagGlErrors()
 void setupCamera(GameContext* context)
 {
     context->camera.position = context->main_actor->position;
-    /* context->camera.position += glm::vec3(0.0, 1.5, 0.0); */
-    /* context->camera.position += glm::rotate( */
-    /*         glm::vec3(0.0f, 0.5f, 1.0f) * (float)context->scroll_wheel, */
-    /*         context->camera.rotation.y, */
-    /*         glm::vec3(0.0f, 1.0f, 0.0f)); */
     glm::vec3 head_bobbing = glm::vec3(0.0f);
     head_bobbing += glm::vec3(
             cos(context->time_now*5),
@@ -397,35 +320,6 @@ void setupCamera(GameContext* context)
             glm::vec3(0.0f, 1.0f, 0.0f)
             );
     context->camera.position += tmp;
-}
-void onKey(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    GameContext* context = &main_context;
-    if( action == GLFW_PRESS )
-        return;
-    switch( key )
-    {
-        case GLFW_KEY_ESCAPE:
-            // Halt the program
-            context->do_stop = true;
-            break;
-        case GLFW_KEY_Q:
-            // reset the game state
-            context->main_actor->position = glm::vec3(0.0f);
-            context->camera.rotation = glm::vec3(0.0f);
-            break;
-        case GLFW_KEY_C:
-            // Clear the default color to see if any changes exists.
-            glClearColor(0.0f, 0.1f, 0.0f, 0.0f);
-            break;
-        case GLFW_KEY_T:
-            // Toggle moving slow and fast.
-            if( context->movement_speed >= 4.0f )
-                context->movement_speed = 0.4f;
-            else
-                context->movement_speed = 4.0f;
-            break;
-    }
 }
 void tick(GameContext* context)
 {

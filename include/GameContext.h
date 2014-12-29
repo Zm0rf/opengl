@@ -10,7 +10,7 @@ class GameContext;
 #include "Actor.h"
 
 /**
- * TODO clean this up and make it a OBJECT and not a struct of data!
+ * TODO remove logic from this class
  */
 class GameContext
 {

@@ -23,6 +23,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 
 //
+#include "Game.h"
+#include "InputHandler.h"
 #include "LinkedObjectFactory.h"
 #include "cube_data.h"
 #include "GameContext.h"
@@ -53,18 +55,6 @@ typedef struct {
     GLuint texcoord_buffer;
     GLuint color_buffer;
 } RenderData;
-
-bool initContext(GameContext* context);
-
-// GLFW callbacks
-void onWindowResize(GLFWwindow* window, int width, int height);
-void onMouseScroll(GLFWwindow* window, double x, double y);
-/**
- * Handle key-presses that fires an action.
- * polling using glfwGetKey will be used for functions that better fitt polling.
- * e.g. WASD will be polled, open inventory will be abstracted to onKey
- */
-void onKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 //
 void render(GameContext* context);
