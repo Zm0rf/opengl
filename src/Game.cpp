@@ -55,6 +55,8 @@ Game::Game()
 
     this->renderer.context = this->getContext();
     this->renderer.init();
+
+    this->world.setTargetActor(this->context.main_actor);
 }
 
 Game::~Game()
