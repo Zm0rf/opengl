@@ -67,5 +67,5 @@ class Renderer
         void init();
         void setupWindow();
         void render(GameContext* context);
-        void prepareRender(GameContext* context);
+        void prepareRender();
 };

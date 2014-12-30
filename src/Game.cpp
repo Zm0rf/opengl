@@ -50,6 +50,11 @@ Game::Game()
     InputHandler::activate(&this->input_handler);
 
     this->context.main_actor = &this->main_actor;
+
+    Renderer::active_renderer = &this->renderer;
+
+    this->renderer.context = this->getContext();
+    this->renderer.init();
 }
 
 Game::~Game()
@@ -72,6 +77,7 @@ void Game::mainLoop()
 
         manageUserInput(&this->context);
         updatePhysics(&this->context);
+        this->context.world->update();
         this->renderer.render(&this->context);
 
         // Swap buffers

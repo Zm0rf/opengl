@@ -7,24 +7,8 @@ int main(void)
             {
                 fprintf(stderr, "GLFW error (%2$d): %1$s\n", error_description, error_code);
             });
-
     Game game;
-
-    GameContext* context = game.getContext();
-
-    printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
-    nagGlErrors();
-
-    Renderer::active_renderer = &game.renderer;
-
-    game.renderer.context = context;
-    game.renderer.init();
-    game.renderer.setupWindow();
-    game.renderer.prepareRender(context);
-
-
     game.mainLoop();
-
     return 0;
 }
 

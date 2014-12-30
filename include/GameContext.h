@@ -11,6 +11,7 @@ class GameContext;
 
 /**
  * TODO remove logic from this class
+ * TODO make Game friend class, allowing only Game to alter?
  */
 class GameContext
 {

@@ -1,8 +1,9 @@
 #include "World.h"
 
-World::World()
+World::World():
+    x(0), y(0), z(0)
 {
-    // Beware of snö.
+    // Beware of snö(plog?).
     for( int x=0; x<WORLD_CACHE_SIZE; x++ )
     {
         for( int y=0; y<WORLD_CACHE_SIZE; y++ )
@@ -40,4 +41,23 @@ WorldChunk* World::getChunkAt(glm::vec3 pos)
         return NULL;
     }
     return this->chunk_list[x][y][z];
+}
+
+void World::update()
+{
+}
+void World::render()
+{
+    for( long i=0; i< WORLD_CACHE_SIZE; i++ )
+    {
+        for( long j=0; j< WORLD_CACHE_SIZE; j++ )
+        {
+            for( long k=0; k< WORLD_CACHE_SIZE; k++ )
+            {
+            WorldChunk* chunk = this->getChunkAt(glm::vec3(i, j, k));
+            if( chunk == NULL ) continue;
+            chunk->render();
+            }
+        }
+    }
 }

@@ -18,6 +18,12 @@ void Renderer::init()
         exit(1);
     }
     this->shader = std::move(shader);
+
+    this->setupWindow();
+    this->prepareRender();
+
+    printf("# Flushing GL error for invalid enumerant.. (bug in GLEW)\n");
+    nagGlErrors();
 }
 void Renderer::setupWindow()
 {
@@ -50,23 +56,11 @@ void Renderer::render(GameContext* context)
             context->main_actor->rotation,
             -glm::vec3(0.5f, 0.0f, 0.5f));
 
+    // Render pretty cubes.
     tmpRenderMovingCubes(context, glm::vec3(10.0f, 20.0f, 10.0f));
-    for( long i=0; i< WORLD_CACHE_SIZE; i++ )
-    {
-        for( long j=0; j< WORLD_CACHE_SIZE; j++ )
-        {
-            WorldChunk* chunk = context->world->getChunkAt(glm::vec3(i, 0.0f, j));
-            if( chunk == NULL )
-                continue;
-            chunk->render();
-        }
-    }
-    /* context->world->getChunkAt(glm::vec3(0.0f, 0.0f, 0.0f))->render(); */
-
-    // TODO is this needed?
-    /* glDisableVertexAttribArray(0); */
+    context->world->render();
 }
-void Renderer::prepareRender(GameContext* context)
+void Renderer::prepareRender()
 {
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
@@ -180,16 +174,12 @@ void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
 
 void renderCube(glm::vec3 position, glm::vec3 rotation, glm::vec3 origo)
 {
-	glm::mat4 Model = glm::mat4(1.0f);
-		/* 1.0f, 0.0f, 0.0f, 0.0f, */
-		/* 0.0f, 1.0f, 0.0f, 0.0f, */
-		/* 0.0f, 0.0f, 1.0f, 0.0f, */
-		/* position.x, position.y, position.z, 1.0f); */
+    glm::mat4 Model = glm::mat4(1.0f);
     Model = glm::translate(Model, position);
     Model = glm::rotate(Model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
     Model = glm::translate(Model, origo);
-	glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
-	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
+    glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
+    glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }
 void Renderer::glfwWindowSizeCallback(GLFWwindow* window, int width, int height)
 {
@@ -208,6 +198,5 @@ void onWindowResize(GameContext* context, GLFWwindow* window, int width, int hei
             (float)context->window_width / (float)context->window_height,
             0.1f,
             100.0f);
-    printf("%d %d\n", width, height);
     glViewport(0, 0, context->window_width, context->window_height);
 }
