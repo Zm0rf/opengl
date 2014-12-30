@@ -2,6 +2,9 @@
 
 #include "GameContext.h"
 
+#include "misc.h"
+
+void manageUserInput(GameContext* context);
 /**
  * TODO break out keyboard management?
  */

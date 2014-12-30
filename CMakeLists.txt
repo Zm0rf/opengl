@@ -29,6 +29,7 @@ add_executable(opengl src/main.cpp
     src/GameContext.cpp
     src/Game.cpp
     src/Renderer.cpp
+    src/Actor.cpp
     )
 
 # Link external libraries.

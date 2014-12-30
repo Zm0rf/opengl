@@ -29,6 +29,12 @@
  */
 void setupCamera(GameContext* context);
 void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
+void nagGlErrors();
+// TODO remove
+void renderCube(
+        glm::vec3 position,
+        glm::vec3 rotation = glm::vec3(0.0f),
+        glm::vec3 origo = glm::vec3(0.0f));
 
 // TODO move and rethink
 typedef struct {

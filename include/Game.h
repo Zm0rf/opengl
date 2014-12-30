@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Renderer.h"
 #include "GameContext.h"
 #include "InputHandler.h"
 
@@ -12,16 +13,18 @@
 
 
 void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height);
+
 /**
  */
 class Game
 {
     private:
-        bool main_running;
         GameContext context;
         World world;
         InputHandler input_handler;
+        Actor main_actor;
     public:
+        Renderer* renderer; // TODO make this private, non-pointer when this is not used in a global scope..
         /** TODO move somewhere!?  */
         static void glfwWindowSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -31,4 +34,4 @@ class Game
         void mainLoop();
 };
 
-extern Game game;
+extern Game game; // TODO remove this

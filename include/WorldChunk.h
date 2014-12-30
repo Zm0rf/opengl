@@ -7,13 +7,9 @@
 
 class WorldChunk;
 #include "Actor.h"
+#include "Renderer.h"
 #include "GameContext.h"
 
-// TODO remove
-void renderCube(
-        glm::vec3 position,
-        glm::vec3 rotation = glm::vec3(0.0f),
-        glm::vec3 origo = glm::vec3(0.0f));
 
 class BlockData
 {

@@ -15,6 +15,7 @@ Renderer::Renderer():
 Renderer::~Renderer()
 {
     glDeleteVertexArrays(1, &this->vertex_array_id);
+    glDeleteBuffers(1, &this->render_data.vertex_buffer);
 }
 
 void Renderer::render(GameContext* context)
@@ -141,4 +142,40 @@ void setupCamera(GameContext* context)
             glm::vec3(0.0f, 1.0f, 0.0f)
             );
     context->camera.position += tmp;
+}
+void nagGlErrors()
+{
+    GLenum error = glGetError();
+    if( error != GL_NO_ERROR )
+    {
+        printf("GL ERROR %s\n", gluErrorString(error));
+    }
+}
+void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos)
+{
+    float i = 3.0f;
+    i += cos(context->time_now*2.0f);
+    i += cos(context->time_now*5.0f)*0.3;
+
+    // Rendering
+    renderCube(pos+glm::vec3(i, 0.0f, 0.0f));
+    renderCube(pos+glm::vec3(-i, 0.0f, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, i, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, -i, 0.0f));
+    renderCube(pos+glm::vec3(0.0f, 0.0f, i));
+    renderCube(pos+glm::vec3(0.0f, 0.0f, -i));
+}
+
+void renderCube(glm::vec3 position, glm::vec3 rotation, glm::vec3 origo)
+{
+	glm::mat4 Model = glm::mat4(1.0f);
+		/* 1.0f, 0.0f, 0.0f, 0.0f, */
+		/* 0.0f, 1.0f, 0.0f, 0.0f, */
+		/* 0.0f, 0.0f, 1.0f, 0.0f, */
+		/* position.x, position.y, position.z, 1.0f); */
+    Model = glm::translate(Model, position);
+    Model = glm::rotate(Model, rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    Model = glm::translate(Model, origo);
+	glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
+	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
 }

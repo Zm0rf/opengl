@@ -48,6 +48,8 @@ Game::Game()
 
     this->input_handler.context = &this->context;
     InputHandler::activate(&this->input_handler);
+
+    this->context.main_actor = &this->main_actor;
 }
 
 Game::~Game()
@@ -63,6 +65,24 @@ GameContext* Game::getContext()
 }
 void Game::mainLoop()
 {
+    this->context.do_stop = false;
+    while( !this->context.do_stop || glfwWindowShouldClose(this->context.window) )
+    {
+        // Update timing related stuff
+        this->context.time_last_frame = this->context.time_now;
+        this->context.time_now = glfwGetTime();
+        this->context.time_delta = this->context.time_now - this->context.time_last_frame;
+
+        manageUserInput(&this->context);
+        updatePhysics(&this->context);
+        this->renderer->render(&this->context);
+
+        // Swap buffers
+        glfwSwapBuffers(this->context.window);
+        glfwPollEvents();
+        // Error handling
+        nagGlErrors();
+    }
 }
 void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height)
 {
