@@ -15,8 +15,8 @@ class GameContext;
 class GameContext
 {
     public:
-        GameContext();
-        ~GameContext();
+        GameContext(): scroll_wheel(0) {};
+        ~GameContext() {};
     public:
         Actor* main_actor;
         Camera camera;

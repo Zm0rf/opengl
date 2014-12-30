@@ -1,4 +1,3 @@
 #include "GameContext.h"
 
-GameContext::GameContext() { }
-GameContext::~GameContext() { }
+// TODO remove this file?

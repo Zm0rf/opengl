@@ -12,7 +12,6 @@
 #include <glm/ext.hpp> // for glm::to_string
 
 
-void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height);
 
 /**
  */
@@ -24,14 +23,10 @@ class Game
         InputHandler input_handler;
         Actor main_actor;
     public:
-        Renderer* renderer; // TODO make this private, non-pointer when this is not used in a global scope..
-        /** TODO move somewhere!?  */
-        static void glfwWindowSizeCallback(GLFWwindow* window, int width, int height);
+        Renderer renderer;
 
         Game();
         ~Game();
         GameContext* getContext();
         void mainLoop();
 };
-
-extern Game game; // TODO remove this

@@ -54,10 +54,7 @@ Game::Game()
 
 Game::~Game()
 {
-}
-void Game::glfwWindowSizeCallback(GLFWwindow* window, int width, int height)
-{
-    onWindowResize(&game.context, window, width, height);
+    glfwTerminate();
 }
 GameContext* Game::getContext()
 {
@@ -75,7 +72,7 @@ void Game::mainLoop()
 
         manageUserInput(&this->context);
         updatePhysics(&this->context);
-        this->renderer->render(&this->context);
+        this->renderer.render(&this->context);
 
         // Swap buffers
         glfwSwapBuffers(this->context.window);
@@ -83,17 +80,4 @@ void Game::mainLoop()
         // Error handling
         nagGlErrors();
     }
-}
-void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height)
-{
-    context->window_width = width;
-    context->window_height = height;
-    context->projection_matrix = glm::perspective(
-            45.0f,
-            /* 4.0f / 3.0f, */
-            (float)context->window_width / (float)context->window_height,
-            0.1f,
-            100.0f);
-    printf("%d %d\n", width, height);
-    glViewport(0, 0, context->window_width, context->window_height);
 }

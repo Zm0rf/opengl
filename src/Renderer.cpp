@@ -1,16 +1,28 @@
 #include "Renderer.h"
 
-Renderer::Renderer():
-    shader("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader")
+Renderer* Renderer::active_renderer = NULL;
+
+Renderer::Renderer()
+{
+}
+void Renderer::init()
 {
     glGenVertexArrays(1, &this->vertex_array_id);
     glBindVertexArray(this->vertex_array_id);
 
-    if( !this->shader.link() )
+    std::unique_ptr<Shader> shader(new Shader("data/shader/SimpleVertexShader.vertexshader", "data/shader/SimpleFragmentShader.fragmentshader"));
+
+    if( !shader->link() )
     {
         fprintf(stderr, "Failed to initialize main shader\n");
         exit(1);
     }
+    this->shader = std::move(shader);
+}
+void Renderer::setupWindow()
+{
+    glfwSetWindowSizeCallback(this->context->window, Renderer::glfwWindowSizeCallback);
+    Renderer::glfwWindowSizeCallback(this->context->window, this->context->window_width, this->context->window_width);
 }
 Renderer::~Renderer()
 {
@@ -20,7 +32,7 @@ Renderer::~Renderer()
 
 void Renderer::render(GameContext* context)
 {
-    glUseProgram(this->shader.getProgramId());
+    glUseProgram(this->shader->getProgramId());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     setupCamera(context);
 
@@ -81,7 +93,7 @@ void Renderer::prepareRender(GameContext* context)
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_raw_data), cube_raw_data, GL_STATIC_DRAW);
 
     // Bind shader locations.
-    GLuint shader_id = this->shader.getProgramId();
+    GLuint shader_id = this->shader->getProgramId();
     glBindAttribLocation(shader_id, ATTRIB_VERTEX_POSITION_LOC, ATTRIB_VERTEX_POSITION_NAME);
     glBindAttribLocation(shader_id, ATTRIB_VERTEX_COLOR_LOC,    ATTRIB_VERTEX_COLOR_NAME);
     glBindAttribLocation(shader_id, ATTRIB_VERTEX_TEXCOORD_LOC, ATTRIB_VERTEX_TEXCOORD_NAME);
@@ -178,4 +190,24 @@ void renderCube(glm::vec3 position, glm::vec3 rotation, glm::vec3 origo)
     Model = glm::translate(Model, origo);
 	glUniformMatrix4fv(2, 1, GL_FALSE, &Model[0][0]);
 	glDrawArrays(GL_TRIANGLES, 0, 12 * 3); // 3 indices starting at 0 -> 1 triangle
+}
+void Renderer::glfwWindowSizeCallback(GLFWwindow* window, int width, int height)
+{
+    if( Renderer::active_renderer != NULL )
+        onWindowResize(Renderer::active_renderer->context, window, width, height);
+}
+void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height)
+{
+    if( context == NULL )
+        return;
+    context->window_width = width;
+    context->window_height = height;
+    context->projection_matrix = glm::perspective(
+            45.0f,
+            /* 4.0f / 3.0f, */
+            (float)context->window_width / (float)context->window_height,
+            0.1f,
+            100.0f);
+    printf("%d %d\n", width, height);
+    glViewport(0, 0, context->window_width, context->window_height);
 }

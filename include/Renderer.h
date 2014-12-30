@@ -9,6 +9,7 @@
 // Include GLFW
 #include <GLFW/glfw3.h>
 
+#include <memory>
 // Include glm
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -35,6 +36,7 @@ void renderCube(
         glm::vec3 position,
         glm::vec3 rotation = glm::vec3(0.0f),
         glm::vec3 origo = glm::vec3(0.0f));
+void onWindowResize(GameContext* context, GLFWwindow* window, int width, int height);
 
 // TODO move and rethink
 typedef struct {
@@ -48,14 +50,22 @@ typedef struct {
 class Renderer
 {
     private:
-        GLuint vertex_array_id;
-        Shader shader;
     public:
+        static Renderer* active_renderer;
+        /** TODO move somewhere!?  */
+        static void glfwWindowSizeCallback(GLFWwindow* window, int width, int height);
+    private:
+        GLuint vertex_array_id;
+        std::unique_ptr<Shader> shader;
+    public:
+        GameContext* context;
         RenderData render_data; // TODO make private
 
         Renderer();
         ~Renderer();
 
+        void init();
+        void setupWindow();
         void render(GameContext* context);
         void prepareRender(GameContext* context);
 };
