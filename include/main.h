@@ -11,18 +11,17 @@
 
 // Include GLEW
 #include <GL/glew.h>
-
 // Include GLFW
 #include <GLFW/glfw3.h>
 
 // Include glm
-// - Force radius to remove deprecated behavour using degrees for rotation.
-// #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <glm/ext.hpp> // for glm::to_string
 
 //
+#include "Renderer.h"
 #include "Game.h"
 #include "InputHandler.h"
 #include "LinkedObjectFactory.h"
@@ -40,35 +39,14 @@
 
 // TODO solve better (added this to mark where to enable inverted mouse)
 #define INVERT_MOUSE_MODIFIER 1
-// Define global shader variables (TODO MOVE)
-#define ATTRIB_VERTEX_POSITION_LOC 0
-#define ATTRIB_VERTEX_POSITION_NAME "vertexPosition"
-#define ATTRIB_VERTEX_COLOR_LOC 1
-#define ATTRIB_VERTEX_COLOR_NAME "vertexColor"
-#define ATTRIB_VERTEX_TEXCOORD_LOC 3
-#define ATTRIB_VERTEX_TEXCOORD_NAME "vertexTexcoord"
-#define UNIFORM_PROJECTION_VIEW_LOC 3
-
-// TODO move and rethink
-typedef struct {
-    GLuint vertex_buffer;
-    GLuint texcoord_buffer;
-    GLuint color_buffer;
-} RenderData;
 
 //
-void render(GameContext* context);
 void manageUserInput(GameContext* context);
 void updatePhysics(GameContext* context);
-void tmpRenderMovingCubes(GameContext* context, glm::vec3 pos);
-void prepareRender(GameContext* context, RenderData* render_data);
-/**
- * Position and rotate camera.
- */
-void setupCamera(GameContext* context);
 /**
  * Update GameContext time related data. (e.g. time_delta)
  */
 void tick(GameContext* context);
 
 void nagGlErrors();
+
